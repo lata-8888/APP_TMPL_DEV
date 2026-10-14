@@ -60,11 +60,46 @@
 
   /* ---------- Telefon & PIN ---------- */
   // Akzeptiert 079 123 45 67, +41 79 …, 0041 79 …; gespeichert wird +41791234567.
-  // Landesvorwahlen für die Anmeldung (Auswahl auf dem Login-Bildschirm); [Vorwahl, Länderkürzel]
-  var COUNTRIES = [['41', 'CH'], ['423', 'LI'], ['49', 'DE'], ['43', 'AT'], ['31', 'NL'], ['32', 'BE'], ['352', 'LU'], ['33', 'FR'], ['39', 'IT'], ['34', 'ES'], ['351', 'PT'], ['44', 'GB'], ['353', 'IE'], ['45', 'DK'], ['46', 'SE'], ['47', 'NO'], ['48', 'PL'], ['420', 'CZ'], ['36', 'HU'], ['30', 'GR'], ['90', 'TR'], ['381', 'RS'], ['385', 'HR'], ['386', 'SI'], ['1', 'US/CA'], ['55', 'BR'], ['61', 'AU']];
-  var ccStored = null;
-  try { ccStored = localStorage.getItem('app-cc' + SFX); } catch (e) { /* ignorieren */ }
-  var phoneCC = COUNTRIES.some(function (c) { return c[0] === ccStored; }) ? ccStored : (cfg.DEFAULT_COUNTRY_CODE || '41');
+  /* Handynummer-Eingabe (wie in der FBRO-App): Länderauswahl (CH/DE/Andere) + Nummer ohne führende Null.
+     Gespeichert wird das internationale Format (+41791234567). */
+  var PHONE_CC = [{ c: '41', l: 'CH +41', ph: '79 123 45 67' }, { c: '49', l: 'DE +49', ph: '176 12345678' }];
+  function ccInfo(c) { return PHONE_CC.filter(function (x) { return x.c === c; })[0] || null; }
+  function fmtNational(cc, n) {
+    n = String(n).replace(/\D/g, '');
+    if (cc === '41') return [n.slice(0, 2), n.slice(2, 5), n.slice(5, 7), n.slice(7, 9)].filter(Boolean).join(' ');
+    if (cc === '49') return [n.slice(0, 3), n.slice(3)].filter(Boolean).join(' ');
+    return n;
+  }
+  // '+41796232345' → { cc: '41', nat: '79 623 23 45' }; unbekanntes Land → { cc: '', nat: '+43…' }
+  function phoneParts(intl) {
+    var raw = String(intl || '');
+    var d = raw.replace(/\D/g, '');
+    if (/^\+\d/.test(raw.replace(/\s/g, ''))) {
+      for (var i = 0; i < PHONE_CC.length; i++) {
+        if (d.indexOf(PHONE_CC[i].c) === 0) return { cc: PHONE_CC[i].c, nat: fmtNational(PHONE_CC[i].c, d.slice(PHONE_CC[i].c.length)) };
+      }
+      return { cc: '', nat: raw.replace(/\s/g, '') };
+    }
+    return { cc: '41', nat: fmtNational('41', d.replace(/^0+/, '')) };
+  }
+  // Länderwahl + Eingabe → Nummer für normPhone(). Eine vollständig internationale Eingabe (+… / 00…) gilt immer.
+  function composePhone(cc, raw) {
+    raw = String(raw || '').trim();
+    if (/^(\+|00)/.test(raw.replace(/\s/g, ''))) return raw;
+    if (!cc) return raw;
+    var d = raw.replace(/\(0\)/g, '').replace(/\D/g, '');
+    if (cc === '41' && d.length === 11 && d.indexOf('41') === 0) d = d.slice(2);   // «41 79 …» ohne +
+    d = d.replace(/^0+/, '');
+    return d ? '+' + cc + d : '';
+  }
+  function phoneField(intl, autoc) {
+    var pp = phoneParts(intl), info = ccInfo(pp.cc);
+    return '<div class="phonerow">' +
+      '<select class="phonecc" name="phonecc" aria-label="' + esc(L('phoneCountry')) + '">' +
+      PHONE_CC.map(function (x) { return '<option value="' + x.c + '"' + (pp.cc === x.c ? ' selected' : '') + '>' + x.l + '</option>'; }).join('') +
+      '<option value=""' + (pp.cc === '' ? ' selected' : '') + '>' + esc(L('phoneOther')) + '</option></select>' +
+      '<input name="phone" type="tel" inputmode="tel" autocomplete="' + (autoc || 'off') + '" placeholder="' + esc(info ? info.ph : '+43 …') + '" value="' + esc(pp.nat) + '"></div>';
+  }
   function normPhone(raw, cc) {
     var d = String(raw).replace(/\(0\)/g, '').replace(/[^\d+]/g, '');
     if (d.indexOf('00') === 0) d = '+' + d.slice(2);
@@ -72,7 +107,12 @@
     else if (d.indexOf('+') !== 0) d = '+' + d;
     return /^\+\d{9,15}$/.test(d) ? d : null;
   }
-  function fmtPhone(p) { return /^\+41\d{9}$/.test(p) ? '+41 ' + p.slice(3, 5) + ' ' + p.slice(5, 8) + ' ' + p.slice(8, 10) + ' ' + p.slice(10) : p; }
+  // Anzeige: Schweizer Nummern immer als 079 123 45 67
+  function fmtPhone(p) {
+    if (/^\+41\d{9}$/.test(p)) return '0' + p.slice(3, 5) + ' ' + p.slice(5, 8) + ' ' + p.slice(8, 10) + ' ' + p.slice(10);
+    if (/^\+49\d{10,11}$/.test(p)) return '+49 ' + p.slice(3, 6) + ' ' + p.slice(6);
+    return p;
+  }
   function defaultPin(p) { return String(p).replace(/\D/g, '').slice(-6); }
   function pinWeak(pin, phone) {
     if (!/^\d{6}$/.test(pin)) return false;
@@ -112,6 +152,7 @@
         fields.map(function (f, i) {
           var html;
           if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
+          else if (f.type === 'phone') html = '<div class="fld"><span>' + esc(f.label) + '</span>' + phoneField(f.value) + '</div>';
           else if (f.type === 'select') html = '<label class="fld"><span>' + esc(f.label) + '</span><select name="' + f.name + '">' + f.options.map(function (o) {
             return '<option value="' + esc(o.v) + '"' + (o.v === f.value ? ' selected' : '') + '>' + esc(o.l) + '</option>';
           }).join('') + '</select></label>';
@@ -128,7 +169,7 @@
       wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.dataset.x === 'cancel') close(null); });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
-        var out = {}; fields.forEach(function (f) { var el = form.elements[f.name]; out[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim(); });
+        var out = {}; fields.forEach(function (f) { var el = form.elements[f.name]; out[f.name] = f.type === 'checkbox' ? el.checked : f.type === 'phone' ? composePhone(form.elements.phonecc ? form.elements.phonecc.value : '', el.value) : el.value.trim(); });
         close(out);
       });
       var first = form.querySelector('input'); if (first) first.focus();
@@ -204,12 +245,7 @@
 
   /* ---------- Anmeldung ---------- */
   async function handleLogin(g) {
-    var cc = g('cc') || phoneCC;
-    if (COUNTRIES.some(function (c) { return c[0] === cc; })) {
-      phoneCC = cc;
-      try { localStorage.setItem('app-cc' + SFX, cc); } catch (e) { /* ignorieren */ }
-    }
-    var phone = normPhone(g('phone'), phoneCC);
+    var phone = normPhone(g('phone'));
     S.phone = g('phone');
     if (!phone) { S.err = L('phoneInvalid'); return render(); }
     var custom = g('pin');
@@ -255,11 +291,7 @@
 
   function viewLogin() {
     return '<main class="authwrap"><div class="authcard"><h1>' + esc(cfg.APP_NAME || 'App') + '</h1><p class="muted">' + esc(L('loginHint')) + '</p>' +
-      '<form data-form="login"><div class="fld"><span>' + esc(L('phone')) + '</span><div class="phonerow">' +
-      '<select name="cc" aria-label="' + esc(L('countryCode')) + '">' + COUNTRIES.map(function (c) {
-        return '<option value="' + c[0] + '"' + (c[0] === phoneCC ? ' selected' : '') + '>' + c[1] + ' +' + c[0] + '</option>';
-      }).join('') + '</select>' +
-      '<input name="phone" type="tel" value="' + esc(S.phone || '') + '" inputmode="tel" placeholder="79 123 45 67" autocomplete="tel-national" aria-label="' + esc(L('phone')) + '"></div></div>' +
+      '<form data-form="login"><div class="fld"><span>' + esc(L('phone')) + '</span>' + phoneField(S.phone, 'tel') + '</div>' +
       fld(L('pinOptional'), 'pin', 'password', '', 'inputmode="numeric" maxlength="6"') +
       (S.err ? '<p class="err" role="alert">' + esc(S.err) + '</p>' : '') +
       '<button class="btn" type="submit"' + (S.busy ? ' disabled' : '') + '>' + esc(L('login')) + '</button></form></div></main>';
@@ -475,7 +507,10 @@
   document.addEventListener('submit', function (e) {
     var f = e.target.closest('form[data-form]'); if (!f) return;
     e.preventDefault();
-    var g = function (n) { return f.elements[n] ? f.elements[n].value.trim() : ''; }, kind = f.dataset.form;
+    var g = function (n) {
+      if (n === 'phone' && f.elements.phonecc) return composePhone(f.elements.phonecc.value, f.elements.phone.value);
+      return f.elements[n] ? f.elements[n].value.trim() : '';
+    }, kind = f.dataset.form;
     if (kind === 'login') return handleLogin(g);
     if (kind === 'profile') {
       return act(async function () {
@@ -513,6 +548,33 @@
       if (r.error) throw r.error;
     }, L('saved'));
   }
+
+  // Live-Formatierung der Nummer; +49… / 0041… wählt das Land automatisch (wie in der FBRO-App)
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || (t.name !== 'phone' && t.name !== 'phonecc')) return;
+    var row = t.closest('.phonerow');
+    if (!row) return;
+    var sel = row.querySelector('select'), inp = row.querySelector('input');
+    var pos = inp.selectionStart, atEnd = pos === inp.value.length;
+    var before = inp.value.slice(0, pos).replace(/\D/g, '').length;
+    var v = inp.value;
+    var m = v.replace(/\s/g, '').match(/^(?:\+|00)(\d+)/);
+    if (m) {
+      var hit = PHONE_CC.filter(function (x) { return m[1].indexOf(x.c) === 0; })[0];
+      if (hit) { sel.value = hit.c; v = fmtNational(hit.c, m[1].slice(hit.c.length)); atEnd = true; }
+      else { sel.value = ''; v = '+' + m[1]; }
+    } else if (sel.value) {
+      v = fmtNational(sel.value, v.replace(/\D/g, '').replace(/^0+/, ''));
+    }
+    var info = ccInfo(sel.value);
+    inp.placeholder = info ? info.ph : '+43 …';
+    if (v === inp.value) return;
+    inp.value = v;
+    if (atEnd) pos = v.length;
+    else { var c = 0; pos = 0; while (pos < v.length && c < before) { if (/\d/.test(v.charAt(pos))) c++; pos++; } }
+    try { inp.setSelectionRange(pos, pos); } catch (x) { /* ignorieren */ }
+  });
 
   document.addEventListener('click', async function (e) {
     var el = e.target.closest('[data-act]'); if (!el) return;
@@ -569,13 +631,13 @@
         if (await askConfirm(L('remove'), L('removeAsk', { name: member.name }), true)) return rpc('remove_member', { target: id }, L('removed'));
         return;
       case 'edit-user': {
-        var r = await askForm(L('edit'), [{ name: 'name', label: L('fullName'), value: member.name }, { name: 'phone', label: L('phone'), value: member.phone, type: 'tel' }], null, L('editPhoneNote'));
+        var r = await askForm(L('edit'), [{ name: 'name', label: L('fullName'), value: member.name }, { name: 'phone', label: L('phone'), value: member.phone, type: 'phone' }], null, L('editPhoneNote'));
         if (!r) return;
         var ph = normPhone(r.phone); if (!ph) return toast(L('phoneInvalid'));
         return rpc('admin_update_member', { target: id, new_name: r.name, new_phone: ph }, L('saved'));
       }
       case 'add-user': {
-        var f = await askForm(L('addUser'), [{ name: 'name', label: L('fullName') }, { name: 'phone', label: L('phone'), type: 'tel' }, { name: 'guest', label: L('guestCheck'), type: 'checkbox' }], L('addUser'), L('addUserNote'));
+        var f = await askForm(L('addUser'), [{ name: 'name', label: L('fullName') }, { name: 'phone', label: L('phone'), type: 'phone' }, { name: 'guest', label: L('guestCheck'), type: 'checkbox' }], L('addUser'), L('addUserNote'));
         if (!f) return;
         var p2 = normPhone(f.phone); if (!f.name || !p2) return toast(L('phoneInvalid'));
         return rpc('admin_create_user', { p_name: f.name, p_phone: p2, p_guest: !!f.guest }, L('userAdded'));

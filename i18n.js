@@ -3,7 +3,7 @@ window.APP_DICT = {
   de: {
     cancel: 'Abbrechen', confirm: 'Bestätigen', save: 'Speichern', saved: 'Gespeichert', error: 'Fehler', edit: 'Bearbeiten', remove: 'Entfernen', removed: 'Entfernt', del: 'Löschen',
     navEvents: 'Events', navProfile: 'Profil', navAdmin: 'Admin', setupTitle: 'Einrichtung',
-    fullName: 'Vor- und Nachname', phone: 'Handynummer', countryCode: 'Landesvorwahl', pinOptional: 'PIN (leer = Standard-PIN)', login: 'Anmelden',
+    fullName: 'Vor- und Nachname', phone: 'Handynummer', phoneCountry: 'Land', phoneOther: 'Andere', pinOptional: 'PIN (leer = Standard-PIN)', login: 'Anmelden',
     loginHint: 'Melde dich mit deiner Handynummer an. Der Standard-PIN sind die letzten 6 Ziffern der Nummer.',
     phoneInvalid: 'Bitte eine gültige Handynummer eingeben.', pinExact: 'Der PIN muss aus genau 6 Ziffern bestehen.',
     pinWeak: 'Dieser PIN ist zu einfach (z. B. 111111 oder 123456) oder entspricht dem Standard-PIN.',
@@ -39,7 +39,7 @@ window.APP_DICT = {
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
     navEvents: 'Events', navProfile: 'Profile', navAdmin: 'Admin', setupTitle: 'Setup',
-    fullName: 'First and last name', phone: 'Mobile number', countryCode: 'Country code', pinOptional: 'PIN (empty = default PIN)', login: 'Log in',
+    fullName: 'First and last name', phone: 'Mobile number', phoneCountry: 'Country', phoneOther: 'Other', pinOptional: 'PIN (empty = default PIN)', login: 'Log in',
     loginHint: 'Log in with your mobile number. The default PIN is the last 6 digits of the number.',
     phoneInvalid: 'Please enter a valid mobile number.', pinExact: 'The PIN must consist of exactly 6 digits.',
     pinWeak: 'This PIN is too simple (e.g. 111111 or 123456) or the same as the default PIN.',
@@ -75,7 +75,7 @@ window.APP_DICT = {
   nl: {
     cancel: 'Annuleren', confirm: 'Bevestigen', save: 'Opslaan', saved: 'Opgeslagen', error: 'Fout', edit: 'Bewerken', remove: 'Verwijderen', removed: 'Verwijderd', del: 'Verwijderen',
     navEvents: 'Events', navProfile: 'Profiel', navAdmin: 'Admin', setupTitle: 'Configuratie',
-    fullName: 'Voor- en achternaam', phone: 'Mobiel nummer', countryCode: 'Landcode', pinOptional: 'PIN (leeg = standaard-PIN)', login: 'Inloggen',
+    fullName: 'Voor- en achternaam', phone: 'Mobiel nummer', phoneCountry: 'Land', phoneOther: 'Overig', pinOptional: 'PIN (leeg = standaard-PIN)', login: 'Inloggen',
     loginHint: 'Log in met je mobiele nummer. De standaard-PIN zijn de laatste 6 cijfers van het nummer.',
     phoneInvalid: 'Voer een geldig mobiel nummer in.', pinExact: 'De PIN moet uit precies 6 cijfers bestaan.',
     pinWeak: 'Deze PIN is te eenvoudig (bijv. 111111 of 123456) of gelijk aan de standaard-PIN.',

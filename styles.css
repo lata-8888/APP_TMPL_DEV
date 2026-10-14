@@ -178,5 +178,5 @@ p{margin:0}
 
 /* Anmeldung: Landesvorwahl + Nummer */
 .phonerow{display:flex;gap:8px}
-.fld .phonerow select{flex:0 0 auto;width:auto;max-width:44%}
+.fld .phonerow select{flex:0 0 auto;width:auto;max-width:42%}
 .fld .phonerow input{flex:1;min-width:0}
