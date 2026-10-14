@@ -138,11 +138,16 @@ p{margin:0}
 
 /* Exzentrisch: Halloween-Look, Orange und Violett; hell = Pergament, dunkel = Nacht */
 :root[data-design="hardrock"]{--bg:#FFF4E0;--surface:#FFFDF7;--ink:#2A1536;--muted:#6E5A7E;--line:#E7CFA8;--crown:#5B2A86;--crown-soft:#F1E3FF;--btn-bg:#D9480F;--btn-fg:#fff;--yes:#2F855A;--yes-soft:#E1F2E2;--no:#C53030;--no-soft:#FBE4E1;--focus:#5B2A86;
-  --r-card:6px;--r-btn:6px;--head-tt:uppercase;--head-ls:.05em;--font-head:"Oswald","Arial Narrow",Impact,sans-serif;--font:"Barlow","Helvetica Neue",Arial,sans-serif}
+  --r-card:6px;--r-btn:6px;--head-tt:none;--head-ls:.04em;--font-head:"Creepster","Oswald",Impact,sans-serif;--font:"Creepster","Oswald",Impact,sans-serif}
 @media(prefers-color-scheme:dark){:root[data-design="hardrock"]:not([data-theme="light"]){--bg:#0D0A12;--surface:#17111F;--ink:#F5EDE0;--muted:#B6A8C4;--line:#3A2A4D;--crown:#FF7A00;--crown-soft:#2A1740;--btn-bg:#FF7A00;--btn-fg:#14091F;--yes:#7CE08A;--yes-soft:#16341E;--no:#FF5D73;--no-soft:#401521;--focus:#B26CFF}}
 :root[data-design="hardrock"][data-theme="dark"]{--bg:#0D0A12;--surface:#17111F;--ink:#F5EDE0;--muted:#B6A8C4;--line:#3A2A4D;--crown:#FF7A00;--crown-soft:#2A1740;--btn-bg:#FF7A00;--btn-fg:#14091F;--yes:#7CE08A;--yes-soft:#16341E;--no:#FF5D73;--no-soft:#401521;--focus:#B26CFF}
 :root[data-design="hardrock"] body::before{content:"";display:block;height:10px;background:repeating-linear-gradient(135deg,#FF7A00 0 10px,#2A1740 10px 20px)}
-:root[data-design="hardrock"] h1{font-family:"Creepster","Oswald",Impact,sans-serif;font-weight:400;letter-spacing:.04em;text-transform:none;font-size:2.8rem}
+:root[data-design="hardrock"] body{font-size:18px;letter-spacing:.03em}
+:root[data-design="hardrock"] h1,:root[data-design="hardrock"] h2,:root[data-design="hardrock"] h3{font-weight:400}
+:root[data-design="hardrock"] h1{font-size:3rem}
+:root[data-design="hardrock"] .cceh b,:root[data-design="hardrock"] .acct,:root[data-design="hardrock"] .mbgh,:root[data-design="hardrock"] .btn,:root[data-design="hardrock"] .resp,:root[data-design="hardrock"] .tab,:root[data-design="hardrock"] .mini,:root[data-design="hardrock"] .segbtn{font-weight:400;letter-spacing:.05em}
+:root[data-design="hardrock"] .tab{font-size:.95rem}
+:root[data-design="hardrock"] .fld input,:root[data-design="hardrock"] .fld select,:root[data-design="hardrock"] button,:root[data-design="hardrock"] input,:root[data-design="hardrock"] select{font-family:var(--font)}
 :root[data-design="hardrock"] .cceh,:root[data-design="hardrock"] .acch{border-left:4px solid #FF7A00;border-bottom:1px dashed var(--line)}
 :root[data-design="hardrock"] .card,:root[data-design="hardrock"] .ccel,:root[data-design="hardrock"] .acc{border-color:color-mix(in srgb,var(--crown) 40%,var(--line))}
 :root[data-design="hardrock"] .btn.ghost{color:var(--ink)}

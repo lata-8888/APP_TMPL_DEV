@@ -26,6 +26,8 @@
   (function () {
     var l = null;
     try { l = localStorage.getItem('app-lang'); } catch (e) { /* ignorieren */ }
+    // Reihenfolge: eigene Wahl → Standardsprache der App (zuletzt bekannt) → Gerätesprache
+    if (LANGS.indexOf(l) < 0) { try { l = localStorage.getItem('app-default-lang'); } catch (e) { /* ignorieren */ } }
     if (LANGS.indexOf(l) < 0) l = (navigator.language || 'de').slice(0, 2);
     setLang(LANGS.indexOf(l) > -1 ? l : 'de');
   })();
@@ -167,12 +169,17 @@
       sb.from('profiles').select('*').order('name'),
       sb.from('events').select('*').order('starts_at'),
       sb.from('event_responses').select('*'),
-      sb.rpc('app_design')
+      sb.rpc('app_design'),
+      sb.rpc('app_language')
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
     S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data;
     applyDesign(r[3].data);
+    S.defaultLang = LANGS.indexOf(r[4].data) > -1 ? r[4].data : 'de';
+    try { localStorage.setItem('app-default-lang', S.defaultLang); } catch (e) { /* ignorieren */ }
     S.me = S.members.filter(function (m) { return m.id === uid; })[0] || null;
+    // Sprache: eigene Wahl im Profil, sonst die Standardsprache der App
+    if (S.me) setLang(LANGS.indexOf(S.me.language) > -1 ? S.me.language : S.defaultLang);
   }
   var reloadTimer, channel;
   function scheduleReload() {
@@ -335,6 +342,13 @@
         (on ? '<span class="ok">' + ICON.check + '</span>' : '') + '</button>';
     }).join('');
     html += accordion('design', L('designTitle'), null, dsg);
+    // Standardsprache der App (nur Admins); Personen können sie im Profil überschreiben
+    var lng = '<p class="muted small" style="margin-bottom:10px">' + esc(L('langHint')) + '</p>' + LANGS.map(function (l) {
+      var on = l === S.defaultLang;
+      return '<button type="button" class="dsgrow' + (on ? ' on' : '') + '" data-act="applang" data-val="' + l + '" aria-pressed="' + on + '">' +
+        '<span class="nm"><b>' + esc(LANG_NAMES[l]) + '</b></span>' + (on ? '<span class="ok">' + ICON.check + '</span>' : '') + '</button>';
+    }).join('');
+    html += accordion('lang', L('langTitle'), null, lng);
     return html;
   }
 
@@ -439,6 +453,7 @@
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
       case 'who': S.open['ev:' + id] = !S.open['ev:' + id]; return render();
+      case 'applang': if (isAdmin() && v !== S.defaultLang) return rpc('set_app_language', { p_lang: v }, L('langSaved')); return;
       case 'design': if (isAdmin() && v !== design) return rpc('set_app_design', { p_design: v }, L('designSaved')); return;
       case 'em': return rpc('set_event_manager', { target: id, flag: v === 'true' }, L('saved'));
       case 'guest': return rpc('set_guest', { target: id, flag: v === 'true' }, L('saved'));
