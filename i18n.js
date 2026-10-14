@@ -32,7 +32,7 @@ window.APP_DICT = {
     design_holland: 'Orange', design_holland_d: 'Durchgehend Oranje, warm, runde Formen',
     design_light: 'Simple', design_light_d: 'Weiss, feine Linien, zurückhaltend',
     navTasks: 'Tasks', tasksSub: 'Aufgaben für dich und andere mit Wunschtermin', taskNew: 'Task hinzufügen', taskEdit: 'Task bearbeiten', taskTitle: 'Aufgabe', taskNote: 'Notiz (optional)', taskAssignee: 'Zuweisen an', taskDue: 'Wunschtermin',
-    taskMissing: 'Aufgabe, Person und Wunschtermin sind Pflicht.', taskSecMine: 'Für mich', taskSecFrom: 'Von mir', taskSecOther: 'Weitere (Admin)', taskDone: 'Als erledigt markieren', taskReopen: 'Wieder öffnen',
+    taskMissing: 'Aufgabe, Person und Wunschtermin sind Pflicht.', taskSecMine: 'Für mich', taskSecFrom: 'Von mir', taskSecOther: 'Weitere (Admin)', taskDone: 'Erledigt', taskReopen: 'Wieder öffnen',
     taskFrom: 'Von {name}', taskTo: 'An {name}', taskFromTo: '{from} → {to}', taskDueOn: 'Wunschtermin: {date}', taskOverdue: 'Überfällig', taskEmpty: 'Keine Tasks.',
     taskDeleteAsk: 'Task «{title}» löschen?', taskForbidden: 'Das darfst du bei diesem Task nicht ändern.', taskSelf: 'Für mich selbst'
   },
@@ -68,7 +68,7 @@ window.APP_DICT = {
     design_holland: 'Orange', design_holland_d: 'All orange, warm, rounded shapes',
     design_light: 'Simple', design_light_d: 'White, fine lines, understated',
     navTasks: 'Tasks', tasksSub: 'Tasks for you and others, with a preferred date', taskNew: 'Add task', taskEdit: 'Edit task', taskTitle: 'Task', taskNote: 'Note (optional)', taskAssignee: 'Assign to', taskDue: 'Preferred date',
-    taskMissing: 'Task, person and preferred date are required.', taskSecMine: 'For me', taskSecFrom: 'From me', taskSecOther: 'Others (admin)', taskDone: 'Mark as done', taskReopen: 'Reopen',
+    taskMissing: 'Task, person and preferred date are required.', taskSecMine: 'For me', taskSecFrom: 'From me', taskSecOther: 'Others (admin)', taskDone: 'Done', taskReopen: 'Reopen',
     taskFrom: 'From {name}', taskTo: 'To {name}', taskFromTo: '{from} → {to}', taskDueOn: 'Preferred date: {date}', taskOverdue: 'Overdue', taskEmpty: 'No tasks.',
     taskDeleteAsk: 'Delete task “{title}”?', taskForbidden: 'You cannot change this task.', taskSelf: 'For myself'
   },
@@ -104,7 +104,7 @@ window.APP_DICT = {
     design_holland: 'Orange', design_holland_d: 'Helemaal oranje, warm, ronde vormen',
     design_light: 'Simple', design_light_d: 'Wit, fijne lijnen, ingetogen',
     navTasks: 'Taken', tasksSub: 'Taken voor jou en anderen met een gewenste datum', taskNew: 'Taak toevoegen', taskEdit: 'Taak bewerken', taskTitle: 'Taak', taskNote: 'Notitie (optioneel)', taskAssignee: 'Toewijzen aan', taskDue: 'Gewenste datum',
-    taskMissing: 'Taak, persoon en gewenste datum zijn verplicht.', taskSecMine: 'Voor mij', taskSecFrom: 'Van mij', taskSecOther: 'Overige (admin)', taskDone: 'Als voltooid markeren', taskReopen: 'Heropenen',
+    taskMissing: 'Taak, persoon en gewenste datum zijn verplicht.', taskSecMine: 'Voor mij', taskSecFrom: 'Van mij', taskSecOther: 'Overige (admin)', taskDone: 'Voltooid', taskReopen: 'Heropenen',
     taskFrom: 'Van {name}', taskTo: 'Aan {name}', taskFromTo: '{from} → {to}', taskDueOn: 'Gewenste datum: {date}', taskOverdue: 'Te laat', taskEmpty: 'Geen taken.',
     taskDeleteAsk: 'Taak «{title}» verwijderen?', taskForbidden: 'Je mag deze taak niet wijzigen.', taskSelf: 'Voor mezelf'
   }

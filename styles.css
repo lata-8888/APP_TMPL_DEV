@@ -174,3 +174,7 @@ p{margin:0}
 .tchk:hover{border-color:var(--yes);color:var(--yes)}
 .tchk.on{background:var(--yes);border-color:var(--yes);color:#fff}
 .trow .btnrow{flex-direction:column}
+.mini.ok{color:var(--yes);border-color:color-mix(in srgb,var(--yes) 55%,var(--line))}
+.mini.ok svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:4px}
+.mini.ok.on{background:var(--yes);border-color:var(--yes);color:#fff}
+.tchk{border-color:var(--muted)}
