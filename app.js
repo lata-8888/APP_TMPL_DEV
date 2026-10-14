@@ -296,13 +296,12 @@
     var over = !t.done && t.due_date < today();
     var who = mine && t.created_by === S.me.id ? L('taskSelf') : mine ? L('taskFrom', { name: nameOf(t.created_by) }) : t.created_by === S.me.id ? L('taskTo', { name: nameOf(t.assigned_to) }) : L('taskFromTo', { from: nameOf(t.created_by), to: nameOf(t.assigned_to) });
     return '<li class="trow' + (t.done ? ' tdone' : '') + '">' +
-      (canDone ? '<button type="button" class="tchk' + (t.done ? ' on' : '') + '" data-act="task-done" data-id="' + t.id + '" aria-pressed="' + t.done + '" aria-label="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '" title="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '">' + ICON.check + '</button>' : '') +
+      (canDone ? '<button type="button" role="checkbox" class="tchk' + (t.done ? ' on' : '') + '" data-act="task-done" data-id="' + t.id + '" aria-checked="' + t.done + '" aria-label="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '" title="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '">' + ICON.check + '</button>' : '') +
       '<div class="l"><b>' + esc(t.title) + '</b><span>' + esc(who) + '</span>' +
       '<span class="' + (over ? 'tover' : '') + '">' + esc(L('taskDueOn', { date: fmtDue(t.due_date) })) + (over ? ' · ' + esc(L('taskOverdue')) : '') + '</span>' +
       (t.note ? '<span class="tnote">' + esc(t.note) + '</span>' : '') + '</div>' +
       // Klar beschrifteter Knopf «Erledigt» / «Wieder öffnen» für die zugewiesene Person und die Person, die den Task erstellt hat
       '<div class="btnrow">' +
-      (canDone ? '<button type="button" class="mini ok' + (t.done ? ' on' : '') + '" data-act="task-done" data-id="' + t.id + '" aria-pressed="' + t.done + '">' + (t.done ? '' : ICON.check) + esc(t.done ? L('taskReopen') : L('taskDone')) + '</button>' : '') +
       (canEdit ? '<button type="button" class="mini" data-act="task-edit" data-id="' + t.id + '">' + esc(L('edit')) + '</button>' +
         '<button type="button" class="mini del" data-act="task-del" data-id="' + t.id + '">' + esc(L('del')) + '</button>' : '') + '</div></li>';
   }

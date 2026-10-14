@@ -169,12 +169,9 @@ p{margin:0}
 .trow.tdone .l b{text-decoration:line-through;opacity:.6}
 .trow.tdone .l span{opacity:.7}
 .tover{color:var(--no);font-weight:600}
-.tchk{width:34px;height:34px;flex:0 0 auto;border-radius:50%;border:2px solid var(--line);background:none;color:transparent;display:inline-flex;align-items:center;justify-content:center;padding:0}
-.tchk svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
-.tchk:hover{border-color:var(--yes);color:var(--yes)}
-.tchk.on{background:var(--yes);border-color:var(--yes);color:#fff}
 .trow .btnrow{flex-direction:column}
-.mini.ok{color:var(--yes);border-color:color-mix(in srgb,var(--yes) 55%,var(--line))}
-.mini.ok svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:4px}
-.mini.ok.on{background:var(--yes);border-color:var(--yes);color:#fff}
-.tchk{border-color:var(--muted)}
+
+.tchk{width:30px;height:30px;flex:0 0 auto;border-radius:8px;border:2px solid var(--muted);background:var(--surface);color:transparent;display:inline-flex;align-items:center;justify-content:center;padding:0;margin-top:2px}
+.tchk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.tchk:hover{border-color:var(--yes)}
+.tchk.on{background:var(--yes);border-color:var(--yes);color:#fff}
