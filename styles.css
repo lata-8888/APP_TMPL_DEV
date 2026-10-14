@@ -129,7 +129,7 @@ p{margin:0}
 
 /* ===== Designs (vom Admin wählbar): data-design am <html>. «standard» = die Tokens oben. ===== */
 /* Holländisch: durchgehend Oranje (Titel, Knöpfe, Streifen), warme Töne, runde Formen */
-:root[data-design="holland"]{--bg:#FFF7ED;--surface:#fff;--ink:#431407;--muted:#7C4A2D;--line:#F3D9BF;--crown:#C2410C;--crown-soft:#FFEDD5;--btn-bg:#C2410C;--btn-fg:#fff;--yes:#2E7D32;--yes-soft:#E1F2E2;--no:#B3261E;--no-soft:#FBE4E1;--focus:#EA580C;
+:root[data-design="holland"]{--bg:#FFF7ED;--surface:#fff;--ink:#431407;--muted:#7C4A2D;--line:#F3D9BF;--crown:#EA580C;--crown-soft:#FFEDD5;--btn-bg:#F97316;--btn-fg:#431407;--yes:#2E7D32;--yes-soft:#E1F2E2;--no:#B3261E;--no-soft:#FBE4E1;--focus:#EA580C;
   --r-card:20px;--r-btn:14px;--font-head:"Fredoka","Arial Rounded MT Bold",Arial,sans-serif;--font:"Nunito","Helvetica Neue",Arial,sans-serif;--head-ls:0}
 @media(prefers-color-scheme:dark){:root[data-design="holland"]:not([data-theme="light"]){--bg:#1F0F05;--surface:#2B1708;--ink:#FFEDD5;--muted:#E0B48C;--line:#4A2A12;--crown:#FDBA74;--crown-soft:#3A1D0A;--btn-bg:#FB923C;--btn-fg:#1F0F05;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#FDBA74}}
 :root[data-design="holland"][data-theme="dark"]{--bg:#1F0F05;--surface:#2B1708;--ink:#FFEDD5;--muted:#E0B48C;--line:#4A2A12;--crown:#FDBA74;--crown-soft:#3A1D0A;--btn-bg:#FB923C;--btn-fg:#1F0F05;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#FDBA74}
