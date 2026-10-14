@@ -31,7 +31,11 @@ window.APP_DICT = {
     design_standard: 'Standard', design_standard_d: 'Blau, ruhig, wie die FBRO-App',
     design_holland: 'Orange', design_holland_d: 'Durchgehend Oranje, warm, runde Formen',
     design_hardrock: 'Excentric', design_hardrock_d: 'Halloween-Look, Orange und Violett, hell oder dunkel',
-    design_light: 'Simple', design_light_d: 'Weiss, feine Linien, zurückhaltend'
+    design_light: 'Simple', design_light_d: 'Weiss, feine Linien, zurückhaltend',
+    navTasks: 'Tasks', tasksSub: 'Aufgaben an andere mit Wunschtermin', taskNew: 'Task hinzufügen', taskEdit: 'Task bearbeiten', taskTitle: 'Aufgabe', taskNote: 'Notiz (optional)', taskAssignee: 'Zuweisen an', taskDue: 'Wunschtermin',
+    taskMissing: 'Aufgabe, Person und Wunschtermin sind Pflicht.', taskSecMine: 'Für mich', taskSecFrom: 'Von mir', taskSecOther: 'Weitere (Admin)', taskDone: 'Als erledigt markieren', taskReopen: 'Wieder öffnen',
+    taskFrom: 'Von {name}', taskTo: 'An {name}', taskFromTo: '{from} → {to}', taskDueOn: 'Wunschtermin: {date}', taskOverdue: 'Überfällig', taskEmpty: 'Keine Tasks.',
+    taskDeleteAsk: 'Task «{title}» löschen?', taskNoOthers: 'Es gibt noch keine anderen Personen für einen Task.', taskForbidden: 'Das darfst du bei diesem Task nicht ändern.'
   },
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
@@ -64,7 +68,11 @@ window.APP_DICT = {
     design_standard: 'Standard', design_standard_d: 'Blue, calm, like the FBRO app',
     design_holland: 'Orange', design_holland_d: 'All orange, warm, rounded shapes',
     design_hardrock: 'Excentric', design_hardrock_d: 'Halloween look, orange and violet, light or dark',
-    design_light: 'Simple', design_light_d: 'White, fine lines, understated'
+    design_light: 'Simple', design_light_d: 'White, fine lines, understated',
+    navTasks: 'Tasks', tasksSub: 'Ask others, with a preferred date', taskNew: 'Add task', taskEdit: 'Edit task', taskTitle: 'Task', taskNote: 'Note (optional)', taskAssignee: 'Assign to', taskDue: 'Preferred date',
+    taskMissing: 'Task, person and preferred date are required.', taskSecMine: 'For me', taskSecFrom: 'From me', taskSecOther: 'Others (admin)', taskDone: 'Mark as done', taskReopen: 'Reopen',
+    taskFrom: 'From {name}', taskTo: 'To {name}', taskFromTo: '{from} → {to}', taskDueOn: 'Preferred date: {date}', taskOverdue: 'Overdue', taskEmpty: 'No tasks.',
+    taskDeleteAsk: 'Delete task «{title}»?', taskNoOthers: 'There are no other people to assign a task to yet.', taskForbidden: 'You cannot change this task.'
   },
   nl: {
     cancel: 'Annuleren', confirm: 'Bevestigen', save: 'Opslaan', saved: 'Opgeslagen', error: 'Fout', edit: 'Bewerken', remove: 'Verwijderen', removed: 'Verwijderd', del: 'Verwijderen',
@@ -97,6 +105,10 @@ window.APP_DICT = {
     design_standard: 'Standard', design_standard_d: 'Blauw, rustig, zoals de FBRO-app',
     design_holland: 'Orange', design_holland_d: 'Helemaal oranje, warm, ronde vormen',
     design_hardrock: 'Excentric', design_hardrock_d: 'Halloween-look, oranje en paars, licht of donker',
-    design_light: 'Simple', design_light_d: 'Wit, fijne lijnen, ingetogen'
+    design_light: 'Simple', design_light_d: 'Wit, fijne lijnen, ingetogen',
+    navTasks: 'Taken', tasksSub: 'Taken voor anderen met een gewenste datum', taskNew: 'Taak toevoegen', taskEdit: 'Taak bewerken', taskTitle: 'Taak', taskNote: 'Notitie (optioneel)', taskAssignee: 'Toewijzen aan', taskDue: 'Gewenste datum',
+    taskMissing: 'Taak, persoon en gewenste datum zijn verplicht.', taskSecMine: 'Voor mij', taskSecFrom: 'Van mij', taskSecOther: 'Overige (admin)', taskDone: 'Als gedaan markeren', taskReopen: 'Heropenen',
+    taskFrom: 'Van {name}', taskTo: 'Aan {name}', taskFromTo: '{from} → {to}', taskDueOn: 'Gewenste datum: {date}', taskOverdue: 'Te laat', taskEmpty: 'Geen taken.',
+    taskDeleteAsk: 'Taak «{title}» verwijderen?', taskNoOthers: 'Er zijn nog geen andere personen om een taak aan toe te wijzen.', taskForbidden: 'Je mag deze taak niet wijzigen.'
   }
 };

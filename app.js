@@ -80,7 +80,7 @@
   function phoneToEmail(p) { return p.replace('+', '') + '@' + (cfg.EMAIL_DOMAIN || 'phone-login.app'); }
 
   /* ---------- Zustand ---------- */
-  var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tab: 'events', sec: {}, open: {}, phone: '' };
+  var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tasks: [], tab: 'events', sec: {}, open: {}, phone: '' };
   var installEvt = null;
   var isAdmin = function () { return !!(S.me && S.me.is_admin); };
   var canManageEvents = function () { return !!(S.me && (S.me.is_admin || S.me.is_event_manager)); };   // Admin oder Event Manager
@@ -107,6 +107,9 @@
         fields.map(function (f, i) {
           var html;
           if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
+          else if (f.type === 'select') html = '<label class="fld"><span>' + esc(f.label) + '</span><select name="' + f.name + '">' + f.options.map(function (o) {
+            return '<option value="' + esc(o.v) + '"' + (o.v === f.value ? ' selected' : '') + '>' + esc(o.l) + '</option>';
+          }).join('') + '</select></label>';
           else html = '<label class="fld"><span>' + esc(f.label) + '</span><input name="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc(f.value || '') + '" autocomplete="off"></label>';
           // aufeinanderfolgende Felder mit half:true stehen nebeneinander (z. B. Datum | Zeit)
           var prev = fields[i - 1], next = fields[i + 1];
@@ -143,6 +146,7 @@
     if (/PHONE_TAKEN|duplicate key/i.test(m)) return L('phoneTaken');
     if (/DEFAULT_ADMIN_PROTECTED/.test(m)) return L('protectedAdmin');
     if (/GUEST_NOT_ALLOWED/.test(m)) return L('guestNoAdmin');
+    if (/TASK_FORBIDDEN/.test(m)) return L('taskForbidden');
     return m ? L('error') + ': ' + m : L('error');
   }
   // Aktion → Toast → neu laden → neu zeichnen. Fehler werden angezeigt, nie verschluckt.
@@ -158,6 +162,7 @@
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 2.9-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 2.9 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.8 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-2.9 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.8-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.4-1.8-2.9 0-3.4a1.7 1.7 0 0 0 1-2.5c-.9-1.6.8-3.3 2.4-2.4c1 .6 2.3 0 2.6-1.1z"/><circle cx="12" cy="12" r="3"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+    tasks: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/></svg>',
     dots: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
     chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
   };
@@ -170,10 +175,11 @@
       sb.from('events').select('*').order('starts_at'),
       sb.from('event_responses').select('*'),
       sb.rpc('app_design'),
-      sb.rpc('app_language')
+      sb.rpc('app_language'),
+      sb.from('tasks').select('*').order('due_date')
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
-    S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data;
+    S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data; S.tasks = r[5].data;
     applyDesign(r[3].data);
     S.defaultLang = LANGS.indexOf(r[4].data) > -1 ? r[4].data : 'de';
     try { localStorage.setItem('app-default-lang', S.defaultLang); } catch (e) { /* ignorieren */ }
@@ -283,6 +289,54 @@
       (past.length ? '<h2 class="week">' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('') : '');
   }
 
+  /* ---------- Tasks: jede Person kann einer anderen eine Aufgabe mit Wunschtermin zuweisen ---------- */
+  function today() { var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function fmtDue(d) { return new Date(d + 'T12:00:00').toLocaleDateString(LOCALE[lang], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
+  function taskRow(t) {
+    var mine = t.assigned_to === S.me.id, canEdit = t.created_by === S.me.id || isAdmin(), canDone = mine || canEdit;
+    var over = !t.done && t.due_date < today();
+    var who = mine ? L('taskFrom', { name: nameOf(t.created_by) }) : t.created_by === S.me.id ? L('taskTo', { name: nameOf(t.assigned_to) }) : L('taskFromTo', { from: nameOf(t.created_by), to: nameOf(t.assigned_to) });
+    return '<li class="trow' + (t.done ? ' tdone' : '') + '">' +
+      (canDone ? '<button type="button" class="tchk' + (t.done ? ' on' : '') + '" data-act="task-done" data-id="' + t.id + '" aria-pressed="' + t.done + '" aria-label="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '" title="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '">' + ICON.check + '</button>' : '') +
+      '<div class="l"><b>' + esc(t.title) + '</b><span>' + esc(who) + '</span>' +
+      '<span class="' + (over ? 'tover' : '') + '">' + esc(L('taskDueOn', { date: fmtDue(t.due_date) })) + (over ? ' · ' + esc(L('taskOverdue')) : '') + '</span>' +
+      (t.note ? '<span class="tnote">' + esc(t.note) + '</span>' : '') + '</div>' +
+      (canEdit ? '<div class="btnrow"><button type="button" class="mini" data-act="task-edit" data-id="' + t.id + '">' + esc(L('edit')) + '</button>' +
+        '<button type="button" class="mini del" data-act="task-del" data-id="' + t.id + '">' + esc(L('del')) + '</button></div>' : '') + '</li>';
+  }
+  function viewTasks() {
+    var open = function (a) { return a.filter(function (t) { return !t.done; }); };
+    var sort = function (a) { return a.slice().sort(function (x, y) { return (x.done - y.done) || x.due_date.localeCompare(y.due_date); }); };
+    var forMe = sort(S.tasks.filter(function (t) { return t.assigned_to === S.me.id; }));
+    var fromMe = sort(S.tasks.filter(function (t) { return t.created_by === S.me.id; }));
+    var other = sort(S.tasks.filter(function (t) { return t.assigned_to !== S.me.id && t.created_by !== S.me.id; }));
+    var list = function (a) { return a.length ? '<ul class="list">' + a.map(taskRow).join('') + '</ul>' : '<p class="muted">' + esc(L('taskEmpty')) + '</p>'; };
+    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navTasks')) + '</h1><p>' + esc(L('tasksSub')) + '</p></div>' +
+      '<button type="button" class="hico addbtn" data-act="task-new" aria-label="' + esc(L('taskNew')) + '" title="' + esc(L('taskNew')) + '">' + ICON.plus + '</button></div>';
+    html += accordion('t-me', L('taskSecMine'), open(forMe).length, list(forMe));
+    html += accordion('t-from', L('taskSecFrom'), open(fromMe).length, list(fromMe));
+    if (isAdmin() && other.length) html += accordion('t-other', L('taskSecOther'), open(other).length, list(other));
+    return html;
+  }
+  async function taskForm(t) {
+    var others = S.members.filter(function (m) { return m.id !== S.me.id; });
+    if (!others.length) return toast(L('taskNoOthers'));
+    var f = await askForm(t ? L('taskEdit') : L('taskNew'), [
+      { name: 'title', label: L('taskTitle'), value: t && t.title },
+      { name: 'assigned_to', label: L('taskAssignee'), type: 'select', value: t ? t.assigned_to : others[0].id, options: others.map(function (m) { return { v: m.id, l: m.name }; }) },
+      { name: 'due_date', label: L('taskDue'), type: 'date', value: t ? t.due_date : '' },
+      { name: 'note', label: L('taskNote'), value: t && t.note }
+    ], null, null);
+    if (!f) return;
+    if (!f.title || !f.due_date || !f.assigned_to) return toast(L('taskMissing'));
+    var row = { title: f.title, assigned_to: f.assigned_to, due_date: f.due_date, note: f.note || null };
+    if (!t) row.created_by = S.me.id;
+    return act(async function () {
+      var r = t ? await sb.from('tasks').update(row).eq('id', t.id) : await sb.from('tasks').insert(row);
+      if (r.error) throw r.error;
+    }, L('saved'));
+  }
+
   function viewProfile() {
     var opt = function (v, l) { return '<button type="button" class="segbtn' + (theme === v ? ' on' : '') + '" data-act="set-theme" data-val="' + v + '" aria-pressed="' + (theme === v) + '">' + esc(l) + '</button>'; };
     var standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -385,13 +439,13 @@
     if (S.step === 'loading') { app.innerHTML = '<main class="authwrap"><p class="muted">…</p></main>'; nav.hidden = true; return; }
     if (S.step === 'login') { app.innerHTML = viewLogin(); nav.hidden = true; return; }
     // Reihenfolge wie in der FBRO-App: Profil steht ganz rechts
-    var tabs = [{ id: 'events', label: L('navEvents'), icon: ICON.cal }];
+    var tabs = [{ id: 'events', label: L('navEvents'), icon: ICON.cal }, { id: 'tasks', label: L('navTasks'), icon: ICON.tasks }];
     if (canManageEvents()) tabs.push({ id: 'admin', label: L('navAdmin'), icon: ICON.gear });
     tabs.push({ id: 'profile', label: L('navProfile'), icon: ICON.user });
     if (!tabs.some(function (t) { return t.id === S.tab; })) S.tab = 'events';
     var open = Array.prototype.map.call(document.querySelectorAll('details.ccel[open]'), function (d) { return d.dataset.k; });
     var banner = S.me.pin_changed ? '' : '<div class="pinbanner" role="status">' + esc(L('pinBanner')) + ' <button class="chip" data-act="goto" data-val="profile">' + esc(L('changePin')) + '</button></div>';
-    var body = S.tab === 'profile' ? viewProfile() : S.tab === 'admin' ? viewAdmin() : viewEvents();
+    var body = S.tab === 'profile' ? viewProfile() : S.tab === 'admin' ? viewAdmin() : S.tab === 'tasks' ? viewTasks() : viewEvents();
     app.innerHTML = banner + '<div class="shell">' + body + '</div>';
     nav.hidden = false;
     nav.innerHTML = tabs.map(function (t) {
@@ -453,6 +507,18 @@
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
       case 'who': S.open['ev:' + id] = !S.open['ev:' + id]; return render();
+      case 'task-new': return taskForm(null);
+      case 'task-edit': return taskForm(S.tasks.filter(function (x) { return x.id === id; })[0]);
+      case 'task-done': {
+        var tk = S.tasks.filter(function (x) { return x.id === id; })[0]; if (!tk) return;
+        return act(async function () { var r = await sb.from('tasks').update({ done: !tk.done }).eq('id', id); if (r.error) throw r.error; });
+      }
+      case 'task-del': {
+        var td = S.tasks.filter(function (x) { return x.id === id; })[0];
+        if (td && await askConfirm(L('del'), L('taskDeleteAsk', { title: td.title }), true))
+          return act(async function () { var r = await sb.from('tasks').delete().eq('id', id); if (r.error) throw r.error; }, L('removed'));
+        return;
+      }
       case 'applang': if (isAdmin() && v !== S.defaultLang) return rpc('set_app_language', { p_lang: v }, L('langSaved')); return;
       case 'design': if (isAdmin() && v !== design) return rpc('set_app_design', { p_design: v }, L('designSaved')); return;
       case 'em': return rpc('set_event_manager', { target: id, flag: v === 'true' }, L('saved'));
