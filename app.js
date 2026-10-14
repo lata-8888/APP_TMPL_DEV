@@ -87,9 +87,15 @@
       var wrap = document.createElement('div'); wrap.className = 'ccsheet-bg';
       wrap.innerHTML = '<form class="ccsheet" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><h3>' + esc(title) + '</h3>' +
         (intro ? '<p class="muted">' + esc(intro) + '</p>' : '') +
-        fields.map(function (f) {
-          if (f.type === 'checkbox') return '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
-          return '<label class="fld"><span>' + esc(f.label) + '</span><input name="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc(f.value || '') + '" autocomplete="off"></label>';
+        fields.map(function (f, i) {
+          var html;
+          if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
+          else html = '<label class="fld"><span>' + esc(f.label) + '</span><input name="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc(f.value || '') + '" autocomplete="off"></label>';
+          // aufeinanderfolgende Felder mit half:true stehen nebeneinander (z. B. Datum | Zeit)
+          var prev = fields[i - 1], next = fields[i + 1];
+          if (f.half && !(prev && prev.half)) html = '<div class="grid2">' + html;
+          if (f.half && !(next && next.half)) html += '</div>';
+          return html;
         }).join('') +
         '<div class="row"><button type="button" class="btn ghost" data-x="cancel">' + esc(L('cancel')) + '</button><button class="btn" type="submit">' + esc(okLabel || L('save')) + '</button></div></form>';
       document.body.appendChild(wrap);
@@ -230,7 +236,6 @@
     return '<article class="ccel"><div class="cceh"><b>' + esc(fmtDay(e.starts_at)) + ' – ' + esc(e.title) + '</b>' +
       (canManageEvents() ? '<button type="button" class="hico" data-act="ev-edit" data-id="' + e.id + '" aria-label="' + esc(L('edit')) + '" title="' + esc(L('edit')) + '">' + ICON.dots + '</button>' : '') + '</div>' +
       '<div class="ccbody"><p class="muted small">' + esc(fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' +
-      (e.description ? '<p class="evdesc">' + esc(e.description) + '</p>' : '') +
       '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
       '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
       (open ? '<div class="who"><div><h4>' + esc(L('evParticipants', { n: yes.length })) + '</h4><div class="chips">' + pills(yes) + '</div></div>' +
@@ -243,7 +248,9 @@
     var limit = Date.now() - 3 * 3600e3;
     var up = S.events.filter(function (e) { return new Date(e.starts_at).getTime() >= limit; });
     var past = S.events.filter(function (e) { return new Date(e.starts_at).getTime() < limit; }).reverse();
-    return '<div class="top"><div><h1 class="pagetitle">' + esc(L('navEvents')) + '</h1></div></div>' +
+    // Admins und Event Manager legen Events direkt hier mit «+» an
+    return '<div class="top"><div><h1 class="pagetitle">' + esc(L('navEvents')) + '</h1></div>' +
+      (canManageEvents() ? '<button type="button" class="hico addbtn" data-act="ev-new" aria-label="' + esc(L('evNew')) + '" title="' + esc(L('evNew')) + '">' + ICON.plus + '</button>' : '') + '</div>' +
       '<h2 class="week">' + esc(L('evUpcoming')) + '</h2>' +
       (up.length ? up.map(eventCard).join('') : '<div class="empty"><p>' + esc(L('evEmpty')) + '</p></div>') +
       (past.length ? '<h2 class="week">' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('') : '');
@@ -375,13 +382,17 @@
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; if (S.step === 'app') render(); });
 
   async function eventForm(ev) {
+    // Wie in der FBRO-App: Titel, Datum und Uhrzeit getrennt (Datum | Zeit nebeneinander), Ort
+    var local = ev ? toLocalInput(ev.starts_at).split('T') : ['', '18:00'];
     var f = await askForm(ev ? L('evEdit') : L('evNew'), [
-      { name: 'title', label: L('evTitle'), value: ev && ev.title }, { name: 'place', label: L('evPlace'), value: ev && ev.place },
-      { name: 'description', label: L('evDesc'), value: ev && ev.description }, { name: 'when', label: L('evWhen'), type: 'datetime-local', value: ev ? toLocalInput(ev.starts_at) : '' }
+      { name: 'title', label: L('evTitle'), value: ev && ev.title },
+      { name: 'date', label: L('evDate'), type: 'date', value: local[0], half: true },
+      { name: 'time', label: L('evTime'), type: 'time', value: local[1], half: true },
+      { name: 'place', label: L('evPlace'), value: ev && ev.place }
     ]);
     if (!f) return;
-    if (!f.title || !f.when) return toast(L('evMissing'));
-    var row = { title: f.title, place: f.place || null, description: f.description || null, starts_at: new Date(f.when).toISOString() };
+    if (!f.title || !f.date || !f.time || !f.place) return toast(L('evMissing'));
+    var row = { title: f.title, place: f.place, starts_at: new Date(f.date + 'T' + f.time).toISOString() };
     return act(async function () {
       var r = ev ? await sb.from('events').update(row).eq('id', ev.id) : await sb.from('events').insert(row);
       if (r.error) throw r.error;

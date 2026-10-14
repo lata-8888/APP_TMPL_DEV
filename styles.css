@@ -34,7 +34,7 @@ p{margin:0}
 .check input{width:22px;height:22px;margin-top:1px;flex:0 0 auto;accent-color:var(--yes)}
 
 /* Knöpfe */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 18px;border-radius:10px;border:0;background:var(--ink);color:var(--onink);font-weight:600;font-size:1.05rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 18px;border-radius:10px;border:0;background:var(--crown);color:#fff;font-weight:600;font-size:1.05rem}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .btn.danger{background:transparent;color:var(--no);border:1.5px solid var(--no)}
 .btn[disabled]{opacity:.5}
@@ -43,12 +43,12 @@ p{margin:0}
 .chip.on{border-color:var(--ink);font-weight:600}
 .segctl{display:flex;gap:6px}
 .segbtn{flex:1;padding:12px 8px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:600}
-.segbtn.on{background:var(--ink);color:var(--onink);border-color:var(--ink)}
+.segbtn.on{background:var(--crown);color:#fff;border-color:var(--crown)}
 .pinbanner{background:#FFF3CD;color:#5c4400;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding-top:max(10px,env(safe-area-inset-top))}
 
 /* Karten und Abschnitte (Kopfzeile blau getönt wie in der FBRO-App) */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
-.card h2{margin-bottom:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;overflow:hidden}
+.card h2{margin:-16px -16px 12px;padding:10px 12px;background:var(--crown-soft);color:var(--crown);font-size:1.35rem}
 .card>p{color:var(--muted);margin-bottom:14px;font-size:.95rem}
 .ccel,.acc{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
 .cceh,.acch{display:flex;align-items:center;gap:10px;padding:8px 4px 8px 12px;background:var(--crown-soft)}
@@ -63,7 +63,9 @@ p{margin:0}
 .hico{width:36px;height:32px;border:0;background:none;color:var(--muted);padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;flex:0 0 auto}
 .hico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .hico svg[fill=currentColor]{fill:currentColor;stroke:none}
-.evdesc{margin:0 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.addbtn{width:44px;height:40px;color:var(--crown);border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+.addbtn svg{width:24px;height:24px;stroke-width:2.4}
 
 /* Antwort-Knöpfe (Dabei / Nicht dabei / Teilnehmer) */
 .actrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
