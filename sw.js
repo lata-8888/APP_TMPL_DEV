@@ -1,6 +1,6 @@
 // Service Worker: hält die App-Dateien bereit. Daten kommen immer live aus Supabase (fremde Hosts werden nicht gecacht).
 // BEI JEDEM DEPLOY CACHE-Version um 1 erhöhen, sonst sehen Nutzer die alte Version!
-const CACHE = 'app-template-v14';
+const CACHE = 'app-template-v15';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'i18n.js', 'config.js', 'manifest.webmanifest',
   'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'icons/favicon-48.png'];
 

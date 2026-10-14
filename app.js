@@ -295,7 +295,7 @@
   function taskRow(t) {
     var mine = t.assigned_to === S.me.id, canEdit = t.created_by === S.me.id || isAdmin(), canDone = mine || canEdit;
     var over = !t.done && t.due_date < today();
-    var who = mine ? L('taskFrom', { name: nameOf(t.created_by) }) : t.created_by === S.me.id ? L('taskTo', { name: nameOf(t.assigned_to) }) : L('taskFromTo', { from: nameOf(t.created_by), to: nameOf(t.assigned_to) });
+    var who = mine && t.created_by === S.me.id ? L('taskSelf') : mine ? L('taskFrom', { name: nameOf(t.created_by) }) : t.created_by === S.me.id ? L('taskTo', { name: nameOf(t.assigned_to) }) : L('taskFromTo', { from: nameOf(t.created_by), to: nameOf(t.assigned_to) });
     return '<li class="trow' + (t.done ? ' tdone' : '') + '">' +
       (canDone ? '<button type="button" class="tchk' + (t.done ? ' on' : '') + '" data-act="task-done" data-id="' + t.id + '" aria-pressed="' + t.done + '" aria-label="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '" title="' + esc(t.done ? L('taskReopen') : L('taskDone')) + '">' + ICON.check + '</button>' : '') +
       '<div class="l"><b>' + esc(t.title) + '</b><span>' + esc(who) + '</span>' +
@@ -308,7 +308,8 @@
     var open = function (a) { return a.filter(function (t) { return !t.done; }); };
     var sort = function (a) { return a.slice().sort(function (x, y) { return (x.done - y.done) || x.due_date.localeCompare(y.due_date); }); };
     var forMe = sort(S.tasks.filter(function (t) { return t.assigned_to === S.me.id; }));
-    var fromMe = sort(S.tasks.filter(function (t) { return t.created_by === S.me.id; }));
+    // Tasks an sich selbst stehen nur unter «Für mich»
+    var fromMe = sort(S.tasks.filter(function (t) { return t.created_by === S.me.id && t.assigned_to !== S.me.id; }));
     var other = sort(S.tasks.filter(function (t) { return t.assigned_to !== S.me.id && t.created_by !== S.me.id; }));
     var list = function (a) { return a.length ? '<ul class="list">' + a.map(taskRow).join('') + '</ul>' : '<p class="muted">' + esc(L('taskEmpty')) + '</p>'; };
     var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navTasks')) + '</h1><p>' + esc(L('tasksSub')) + '</p></div>' +
@@ -319,11 +320,10 @@
     return html;
   }
   async function taskForm(t) {
-    var others = S.members.filter(function (m) { return m.id !== S.me.id; });
-    if (!others.length) return toast(L('taskNoOthers'));
+    // Zuweisen darf man allen Personen, auch sich selbst
     var f = await askForm(t ? L('taskEdit') : L('taskNew'), [
       { name: 'title', label: L('taskTitle'), value: t && t.title },
-      { name: 'assigned_to', label: L('taskAssignee'), type: 'select', value: t ? t.assigned_to : others[0].id, options: others.map(function (m) { return { v: m.id, l: m.name }; }) },
+      { name: 'assigned_to', label: L('taskAssignee'), type: 'select', value: t ? t.assigned_to : S.me.id, options: S.members.map(function (m) { return { v: m.id, l: m.name + (m.id === S.me.id ? ' (' + L('you') + ')' : '') }; }) },
       { name: 'due_date', label: L('taskDue'), type: 'date', value: t ? t.due_date : '' },
       { name: 'note', label: L('taskNote'), value: t && t.note }
     ], null, null);
