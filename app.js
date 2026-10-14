@@ -63,9 +63,16 @@
   function phoneToEmail(p) { return p.replace('+', '') + '@' + (cfg.EMAIL_DOMAIN || 'phone-login.app'); }
 
   /* ---------- Zustand ---------- */
-  var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tab: 'events', sec: {}, phone: '' };
+  var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tab: 'events', sec: {}, open: {}, phone: '' };
   var installEvt = null;
   var isAdmin = function () { return !!(S.me && S.me.is_admin); };
+  var canManageEvents = function () { return !!(S.me && (S.me.is_admin || S.me.is_event_manager)); };   // Admin oder Event Manager
+  var roleLabels = function (m) {
+    var r = [m.is_guest ? L('roleGuest') : L('roleUser')];
+    if (m.is_admin) r.push(L('roleAdmin'));
+    if (m.is_event_manager) r.push(L('roleEM'));
+    return r;
+  };
 
   /* ---------- UI-Bausteine ---------- */
   var toastTimer;
@@ -81,6 +88,7 @@
       wrap.innerHTML = '<form class="ccsheet" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><h3>' + esc(title) + '</h3>' +
         (intro ? '<p class="muted">' + esc(intro) + '</p>' : '') +
         fields.map(function (f) {
+          if (f.type === 'checkbox') return '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
           return '<label class="fld"><span>' + esc(f.label) + '</span><input name="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc(f.value || '') + '" autocomplete="off"></label>';
         }).join('') +
         '<div class="row"><button type="button" class="btn ghost" data-x="cancel">' + esc(L('cancel')) + '</button><button class="btn" type="submit">' + esc(okLabel || L('save')) + '</button></div></form>';
@@ -89,7 +97,7 @@
       wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.dataset.x === 'cancel') close(null); });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
-        var out = {}; fields.forEach(function (f) { out[f.name] = form.elements[f.name].value.trim(); });
+        var out = {}; fields.forEach(function (f) { var el = form.elements[f.name]; out[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim(); });
         close(out);
       });
       var first = form.querySelector('input'); if (first) first.focus();
@@ -111,6 +119,7 @@
     var m = (e && e.message) || '';
     if (/PHONE_TAKEN|duplicate key/i.test(m)) return L('phoneTaken');
     if (/DEFAULT_ADMIN_PROTECTED/.test(m)) return L('protectedAdmin');
+    if (/GUEST_NOT_ALLOWED/.test(m)) return L('guestNoAdmin');
     return m ? L('error') + ': ' + m : L('error');
   }
   // Aktion → Toast → neu laden → neu zeichnen. Fehler werden angezeigt, nie verschluckt.
@@ -121,7 +130,9 @@
   var ICON = {
     cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
     user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>',
-    gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+    guest: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 3.5-7 8-7M17 14v6M14 17h6"/></svg>',
+    star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
+    gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 2.9-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 2.9 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.8 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-2.9 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.8-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.4-1.8-2.9 0-3.4a1.7 1.7 0 0 0 1-2.5c-.9-1.6.8-3.3 2.4-2.4c1 .6 2.3 0 2.6-1.1z"/><circle cx="12" cy="12" r="3"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     dots: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
     chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
@@ -207,21 +218,35 @@
     var rs = S.resp.filter(function (r) { return r.event_id === e.id; });
     var yes = rs.filter(function (r) { return r.answer === 'yes'; }), no = rs.filter(function (r) { return r.answer === 'no'; });
     var mine = rs.filter(function (r) { return r.user_id === S.me.id; })[0];
-    var names = function (a) { return a.length ? a.map(function (r) { return esc(nameOf(r.user_id)); }).join(', ') : esc(L('evNobody')); };
-    var btn = function (v, label) { return '<button class="chip' + (mine && mine.answer === v ? ' on' : '') + '" data-act="answer" data-id="' + e.id + '" data-val="' + v + '" aria-pressed="' + !!(mine && mine.answer === v) + '">' + esc(label) + '</button>'; };
-    return '<details class="ccel" data-k="' + e.id + '"><summary><span><strong>' + esc(e.title) + '</strong><br><small class="muted">' + esc(fmtDate(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</small></span>' +
-      '<small class="muted">' + (mine ? (mine.answer === 'yes' ? '✔ ' + esc(L('evYes')) : '✖ ' + esc(L('evNo'))) : esc(L('evNoAnswer'))) + '</small></summary><div class="ccbody">' +
-      (e.description ? '<p>' + esc(e.description) + '</p>' : '') +
-      '<div class="chips">' + btn('yes', L('evYes')) + btn('no', L('evNo')) + '</div>' +
-      '<p><strong>' + esc(L('evParticipants', { n: yes.length })) + '</strong><br>' + names(yes) + '</p>' +
-      '<p><strong>' + esc(L('evDeclined', { n: no.length })) + '</strong><br>' + names(no) + '</p></div></details>';
+    var open = !!S.open['ev:' + e.id];
+    // Namen als Pillen; Gäste mit Rand, die eigene Person fett – wie in der FBRO-App
+    var pills = function (a) {
+      return a.length ? a.map(function (r) {
+        var m = S.members.filter(function (x) { return x.id === r.user_id; })[0] || {}, me = r.user_id === S.me.id;
+        return '<span class="ccp' + (m.is_guest ? ' g' : '') + (me ? ' me' : '') + '">' + esc(m.name || '?') + (me ? ' ' + esc(L('you')) : '') + '</span>';
+      }).join('') : '<span class="small muted">' + esc(L('evNobody')) + '</span>';
+    };
+    var btn = function (v, cls, label) { return '<button type="button" class="resp ' + cls + '" data-act="answer" data-id="' + e.id + '" data-val="' + v + '" aria-pressed="' + !!(mine && mine.answer === v) + '">' + esc(label) + '</button>'; };
+    return '<article class="ccel"><div class="cceh"><b>' + esc(fmtDay(e.starts_at)) + ' – ' + esc(e.title) + '</b>' +
+      (canManageEvents() ? '<button type="button" class="hico" data-act="ev-edit" data-id="' + e.id + '" aria-label="' + esc(L('edit')) + '" title="' + esc(L('edit')) + '">' + ICON.dots + '</button>' : '') + '</div>' +
+      '<div class="ccbody"><p class="muted small">' + esc(fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' +
+      (e.description ? '<p class="evdesc">' + esc(e.description) + '</p>' : '') +
+      '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
+      '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
+      (open ? '<div class="who"><div><h4>' + esc(L('evParticipants', { n: yes.length })) + '</h4><div class="chips">' + pills(yes) + '</div></div>' +
+        '<div><h4>' + esc(L('evDeclined', { n: no.length })) + '</h4><div class="chips">' + pills(no) + '</div></div></div>' : '') +
+      '</div></article>';
   }
+  function fmtDay(iso) { return new Date(iso).toLocaleDateString(LOCALE[lang], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
+  function fmtTime(iso) { return new Date(iso).toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit' }); }
   function viewEvents() {
     var limit = Date.now() - 3 * 3600e3;
     var up = S.events.filter(function (e) { return new Date(e.starts_at).getTime() >= limit; });
     var past = S.events.filter(function (e) { return new Date(e.starts_at).getTime() < limit; }).reverse();
-    return '<h2>' + esc(L('evUpcoming')) + '</h2>' + (up.length ? up.map(eventCard).join('') : '<p class="muted">' + esc(L('evEmpty')) + '</p>') +
-      (past.length ? '<h2>' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('') : '');
+    return '<div class="top"><div><h1 class="pagetitle">' + esc(L('navEvents')) + '</h1></div></div>' +
+      '<h2 class="week">' + esc(L('evUpcoming')) + '</h2>' +
+      (up.length ? up.map(eventCard).join('') : '<div class="empty"><p>' + esc(L('evEmpty')) + '</p></div>') +
+      (past.length ? '<h2 class="week">' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('') : '');
   }
 
   function viewProfile() {
@@ -231,7 +256,9 @@
     var install = standalone ? '<p class="muted">' + esc(L('installDone')) + '</p>'
       : installEvt ? '<p class="muted">' + esc(L('installHint')) + '</p><button class="btn" data-act="install">' + esc(L('installBtn')) + '</button>'
       : '<p class="muted">' + esc(ios ? L('installIos') : L('installHint')) + '</p>';
-    return '<section class="card"><h2>' + esc(L('myAccount')) + '</h2><p class="muted">' + esc(fmtPhone(S.me.phone)) + ' · ' + esc(S.me.is_admin ? L('roleAdmin') : L('roleUser')) + '</p>' +
+    return '<div class="top"><div><h1 class="pagetitle">' + esc(L('navProfile')) + '</h1></div></div>' +
+      '<section class="card"><h2>' + esc(L('myAccount')) + '</h2><p class="muted">' + esc(fmtPhone(S.me.phone)) + '</p>' +
+      '<div class="profile-row"><span class="muted">' + esc(L('roles')) + '</span><span class="chips">' + roleLabels(S.me).map(function (r) { return '<span class="ccp">' + esc(r) + '</span>'; }).join('') + '</span></div>' +
       '<form data-form="profile">' + fld(L('fullName'), 'name', 'text', S.me.name) +
       '<label class="fld"><span>' + esc(L('language')) + '</span><select name="language">' + LANGS.map(function (l) { return '<option value="' + l + '"' + (l === lang ? ' selected' : '') + '>' + LANG_NAMES[l] + '</option>'; }).join('') + '</select></label>' +
       '<button class="btn" type="submit">' + esc(L('save')) + '</button></form></section>' +
@@ -252,13 +279,25 @@
         '<button type="button" class="mini del" data-act="ev-del" data-id="' + e.id + '">' + esc(L('del')) + '</button></div></li>';
     }).join('') + '</ul>' : '<p class="muted">' + esc(L('evAdminEmpty')) + '</p>';
     html += accordion('events', L('adminEvents'), evs.length, evBody, 'ev-new', L('evNew'));
-    var mbBody = '<ul class="list">' + S.members.map(function (m) {
+    if (!isAdmin()) return html;   // Event Manager sehen nur die Events
+    var tag = function (cls, label, icon) { return '<span class="mbic ' + cls + '" title="' + esc(label) + '" aria-label="' + esc(label) + '">' + icon + '</span>'; };
+    var mbRow = function (m) {
       var self = m.id === S.me.id, lamp = m.pin_changed ? L('pinLampOk') : L('pinLampNo');
       return '<li class="mbrow"><div class="l"><b>' + esc(m.name) + ' <span class="pinlamp ' + (m.pin_changed ? 'ok' : 'no') + '" title="' + esc(lamp) + '" aria-label="' + esc(lamp) + '"></span>' +
         (self ? ' <span class="mbyou">' + esc(L('you')) + '</span>' : '') + '</b><span>' + esc(fmtPhone(m.phone)) + '</span></div>' +
-        '<span class="mbicons">' + (m.is_admin ? '<span class="mbic adm" title="' + esc(L('roleAdmin')) + '" aria-label="' + esc(L('roleAdmin')) + '">' + ICON.gear + '</span>' : '') + '</span>' +
+        '<span class="mbicons">' + (m.is_admin ? tag('adm', L('roleAdmin'), ICON.gear) : '') + (m.is_event_manager ? tag('em', L('roleEM'), ICON.star) : '') + '</span>' +
         '<button type="button" class="hico" data-act="mb-menu" data-id="' + esc(m.id) + '" aria-label="' + esc(L('actions') + ': ' + m.name) + '" title="' + esc(L('actions')) + '">' + ICON.dots + '</button></li>';
-    }).join('') + '</ul>';
+    };
+    // Zwei Gruppen: User und Gäste (klappbar wie die Gruppen in der FBRO-App)
+    var group = function (key, label, list, icon) {
+      var open = S.sec[key] !== false;
+      return '<div class="mbgrp"><button type="button" class="mbgh" data-act="sec" data-id="' + key + '" aria-expanded="' + open + '">' +
+        '<span class="mbcrown">' + icon + '</span><span>' + esc(label) + ' <span class="cnt">(' + list.length + ')</span></span><span class="sp"></span>' +
+        '<span class="accfold' + (open ? ' open' : '') + '">' + ICON.chev + '</span></button>' +
+        (open ? (list.length ? '<ul class="list">' + list.map(mbRow).join('') + '</ul>' : '<p class="muted small" style="padding:6px 0 10px">' + esc(L('nobody')) + '</p>') : '') + '</div>';
+    };
+    var users = S.members.filter(function (m) { return !m.is_guest; }), guests = S.members.filter(function (m) { return m.is_guest; });
+    var mbBody = group('g-user', L('grpUsers'), users, ICON.user) + group('g-guest', L('grpGuests'), guests, ICON.guest);
     html += accordion('members', L('secMembers'), S.members.length, mbBody, 'add-user', L('addUser'));
     return html;
   }
@@ -281,6 +320,8 @@
     };
     wrap.innerHTML = '<div class="ccsheet" role="dialog" aria-modal="true" aria-label="' + esc(m.name) + '"><h3>' + esc(m.name) + '</h3><div class="menu">' +
       (!self ? b('admin', m.is_admin ? L('revokeAdmin') : L('makeAdmin'), 'ghost', !m.is_admin) : '') +
+      b('em', m.is_event_manager ? L('revokeEM') : L('makeEM'), 'ghost', !m.is_event_manager) +
+      b('guest', m.is_guest ? L('makeUser') : L('makeGuest'), 'ghost', !m.is_guest) +
       b('edit-user', L('edit'), 'ghost') + b('reset-pin', L('resetPin'), 'ghost') +
       (!self ? b('remove', L('remove'), 'danger') : '') +
       '<button type="button" class="btn ghost" data-x="cancel">' + esc(L('cancel')) + '</button></div></div>';
@@ -293,8 +334,10 @@
     if (!configured) { app.innerHTML = '<main class="authwrap"><div class="authcard"><h1>Setup</h1><p>' + esc(L('notConfigured')) + '</p></div></main>'; nav.hidden = true; return; }
     if (S.step === 'loading') { app.innerHTML = '<main class="authwrap"><p class="muted">…</p></main>'; nav.hidden = true; return; }
     if (S.step === 'login') { app.innerHTML = viewLogin(); nav.hidden = true; return; }
-    var tabs = [{ id: 'events', label: L('navEvents'), icon: ICON.cal }, { id: 'profile', label: L('navProfile'), icon: ICON.user }];
-    if (isAdmin()) tabs.push({ id: 'admin', label: L('navAdmin'), icon: ICON.gear });
+    // Reihenfolge wie in der FBRO-App: Profil steht ganz rechts
+    var tabs = [{ id: 'events', label: L('navEvents'), icon: ICON.cal }];
+    if (canManageEvents()) tabs.push({ id: 'admin', label: L('navAdmin'), icon: ICON.gear });
+    tabs.push({ id: 'profile', label: L('navProfile'), icon: ICON.user });
     if (!tabs.some(function (t) { return t.id === S.tab; })) S.tab = 'events';
     var open = Array.prototype.map.call(document.querySelectorAll('details.ccel[open]'), function (d) { return d.dataset.k; });
     var banner = S.me.pin_changed ? '' : '<div class="pinbanner" role="status">' + esc(L('pinBanner')) + ' <button class="chip" data-act="goto" data-val="profile">' + esc(L('changePin')) + '</button></div>';
@@ -354,6 +397,9 @@
     switch (a) {
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
+      case 'who': S.open['ev:' + id] = !S.open['ev:' + id]; return render();
+      case 'em': return rpc('set_event_manager', { target: id, flag: v === 'true' }, L('saved'));
+      case 'guest': return rpc('set_guest', { target: id, flag: v === 'true' }, L('saved'));
       case 'mb-menu': if (isAdmin() && member) memberMenu(member); return;
       case 'logout': return logout();
       case 'install': if (installEvt) { installEvt.prompt(); installEvt = null; render(); } return;
@@ -372,7 +418,7 @@
       case 'ev-new': return eventForm(null);
       case 'ev-edit': return eventForm(ev);
       case 'ev-del':
-        if (isAdmin() && await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))
+        if (canManageEvents() && await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))
           return act(async function () { var r = await sb.from('events').delete().eq('id', id); if (r.error) throw r.error; }, L('removed'));
         return;
       case 'admin': return rpc('set_admin', { target: id, make_admin: v === 'true' }, L('saved'));
@@ -389,10 +435,10 @@
         return rpc('admin_update_member', { target: id, new_name: r.name, new_phone: ph }, L('saved'));
       }
       case 'add-user': {
-        var f = await askForm(L('addUser'), [{ name: 'name', label: L('fullName') }, { name: 'phone', label: L('phone'), type: 'tel' }], L('addUser'), L('addUserNote'));
+        var f = await askForm(L('addUser'), [{ name: 'name', label: L('fullName') }, { name: 'phone', label: L('phone'), type: 'tel' }, { name: 'guest', label: L('guestCheck'), type: 'checkbox' }], L('addUser'), L('addUserNote'));
         if (!f) return;
         var p2 = normPhone(f.phone); if (!f.name || !p2) return toast(L('phoneInvalid'));
-        return rpc('admin_create_user', { p_name: f.name, p_phone: p2 }, L('userAdded'));
+        return rpc('admin_create_user', { p_name: f.name, p_phone: p2, p_guest: !!f.guest }, L('userAdded'));
       }
     }
   });

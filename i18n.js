@@ -22,7 +22,10 @@ window.APP_DICT = {
     addUser: 'Person hinzufügen', addUserNote: 'Die Person meldet sich mit der Handynummer an. Der PIN sind die letzten 6 Ziffern.', userAdded: 'Person hinzugefügt',
     makeAdmin: 'Zum Admin machen', revokeAdmin: 'Admin entziehen', resetPin: 'PIN zurücksetzen', resetPinAsk: 'PIN von {name} auf den Standard-PIN zurücksetzen?', pinReset: 'PIN zurückgesetzt',
     removeAsk: '{name} wirklich entfernen? Konto und Antworten werden gelöscht.', editPhoneNote: 'Bei neuer Nummer gilt wieder der Standard-PIN.', defaultPin: 'Standard-PIN',
-    adminSub: 'Events und Personen verwalten', secMembers: 'Personen', you: 'Du', actions: 'Aktionen', pinLampOk: 'PIN geändert', pinLampNo: 'Standard-PIN aktiv'
+    adminSub: 'Events und Personen verwalten', secMembers: 'Personen', you: 'Du', actions: 'Aktionen', pinLampOk: 'PIN geändert', pinLampNo: 'Standard-PIN aktiv',
+    roleGuest: 'Gast', roleEM: 'Event Manager', roles: 'Rollen', grpUsers: 'User', grpGuests: 'Gäste', nobody: 'Niemand',
+    makeEM: 'Zum Event Manager machen', revokeEM: 'Event Manager entziehen', makeGuest: 'Zum Gast machen', makeUser: 'Zum User machen',
+    guestCheck: 'Als Gast anlegen', guestNoAdmin: 'Admins und Event Manager können keine Gäste sein.'
   },
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
@@ -46,6 +49,9 @@ window.APP_DICT = {
     addUser: 'Add person', addUserNote: 'The person logs in with their mobile number. The PIN is the last 6 digits.', userAdded: 'Person added',
     makeAdmin: 'Make admin', revokeAdmin: 'Revoke admin', resetPin: 'Reset PIN', resetPinAsk: 'Reset the PIN of {name} to the default PIN?', pinReset: 'PIN reset',
     removeAsk: 'Really remove {name}? Account and answers will be deleted.', editPhoneNote: 'With a new number the default PIN applies again.', defaultPin: 'default PIN',
-    adminSub: 'Manage events and people', secMembers: 'People', you: 'You', actions: 'Actions', pinLampOk: 'PIN changed', pinLampNo: 'Default PIN active'
+    adminSub: 'Manage events and people', secMembers: 'People', you: 'You', actions: 'Actions', pinLampOk: 'PIN changed', pinLampNo: 'Default PIN active',
+    roleGuest: 'Guest', roleEM: 'Event manager', roles: 'Roles', grpUsers: 'Users', grpGuests: 'Guests', nobody: 'Nobody',
+    makeEM: 'Make event manager', revokeEM: 'Revoke event manager', makeGuest: 'Make guest', makeUser: 'Make user',
+    guestCheck: 'Add as guest', guestNoAdmin: 'Admins and event managers cannot be guests.'
   }
 };
