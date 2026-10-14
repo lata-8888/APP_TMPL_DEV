@@ -10,8 +10,8 @@
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
   };
 
-  /* ---------- Sprachen (de, en) ---------- */
-  var LANGS = ['de', 'en'], LANG_NAMES = { de: 'Deutsch', en: 'English' }, LOCALE = { de: 'de-CH', en: 'en-GB' };
+  /* ---------- Sprachen (de, en, nl) ---------- */
+  var LANGS = ['de', 'en', 'nl'], LANG_NAMES = { de: 'Deutsch', en: 'English', nl: 'Nederlands' }, LOCALE = { de: 'de-CH', en: 'en-GB', nl: 'nl-NL' };
   var DICT = window.APP_DICT || {}, lang = 'de';
   function L(key, p) {
     var s = (DICT[lang] && DICT[lang][key]) || (DICT.de && DICT.de[key]) || key;

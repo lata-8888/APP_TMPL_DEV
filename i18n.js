@@ -1,4 +1,4 @@
-/* Übersetzungen (Deutsch, Englisch). Beide Sprachen MÜSSEN dieselben Schlüssel haben – tools/check.js prüft das. */
+/* Übersetzungen (Deutsch, Englisch, Niederländisch). Alle Sprachen MÜSSEN dieselben Schlüssel haben – tools/check.js prüft das. */
 window.APP_DICT = {
   de: {
     cancel: 'Abbrechen', confirm: 'Bestätigen', save: 'Speichern', saved: 'Gespeichert', error: 'Fehler', edit: 'Bearbeiten', remove: 'Entfernen', removed: 'Entfernt', del: 'Löschen',
@@ -29,9 +29,9 @@ window.APP_DICT = {
     langTitle: 'Standardsprache', langSaved: 'Standardsprache geändert', langHint: 'Gilt für alle, die im Profil keine eigene Sprache gewählt haben.',
     designTitle: 'Design', designSaved: 'Design geändert',
     design_standard: 'Standard', design_standard_d: 'Blau, ruhig, wie die FBRO-App',
-    design_holland: 'Holländisch', design_holland_d: 'Durchgehend Oranje, warm, runde Formen',
-    design_hardrock: 'Exzentrisch', design_hardrock_d: 'Halloween-Look, Orange und Violett, hell oder dunkel',
-    design_light: 'Dezent', design_light_d: 'Weiss, feine Linien, zurückhaltend'
+    design_holland: 'Orange', design_holland_d: 'Durchgehend Oranje, warm, runde Formen',
+    design_hardrock: 'Excentric', design_hardrock_d: 'Halloween-Look, Orange und Violett, hell oder dunkel',
+    design_light: 'Simple', design_light_d: 'Weiss, feine Linien, zurückhaltend'
   },
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
@@ -62,8 +62,41 @@ window.APP_DICT = {
     langTitle: 'Default language', langSaved: 'Default language changed', langHint: 'Applies to everyone who has not picked a language in their profile.',
     designTitle: 'Design', designSaved: 'Design changed',
     design_standard: 'Standard', design_standard_d: 'Blue, calm, like the FBRO app',
-    design_holland: 'Dutch', design_holland_d: 'All orange, warm, rounded shapes',
-    design_hardrock: 'Eccentric', design_hardrock_d: 'Halloween look, orange and violet, light or dark',
-    design_light: 'Subtle', design_light_d: 'White, fine lines, understated'
+    design_holland: 'Orange', design_holland_d: 'All orange, warm, rounded shapes',
+    design_hardrock: 'Excentric', design_hardrock_d: 'Halloween look, orange and violet, light or dark',
+    design_light: 'Simple', design_light_d: 'White, fine lines, understated'
+  },
+  nl: {
+    cancel: 'Annuleren', confirm: 'Bevestigen', save: 'Opslaan', saved: 'Opgeslagen', error: 'Fout', edit: 'Bewerken', remove: 'Verwijderen', removed: 'Verwijderd', del: 'Verwijderen',
+    navEvents: 'Events', navProfile: 'Profiel', navAdmin: 'Admin',
+    fullName: 'Voor- en achternaam', phone: 'Mobiel nummer', pinOptional: 'PIN (leeg = standaard-PIN)', login: 'Inloggen',
+    loginHint: 'Log in met je mobiele nummer. De standaard-PIN zijn de laatste 6 cijfers van het nummer.',
+    phoneInvalid: 'Voer een geldig mobiel nummer in.', pinExact: 'De PIN moet uit precies 6 cijfers bestaan.',
+    pinWeak: 'Deze PIN is te eenvoudig (bijv. 111111 of 123456) of gelijk aan de standaard-PIN.',
+    authFail: 'Inloggen mislukt. Mobiel nummer of PIN klopt niet.', phoneTaken: 'Dit mobiele nummer is al geregistreerd.',
+    protectedAdmin: 'De systeembeheerder is beschermd en kan niet worden gewijzigd.',
+    notConfigured: 'De app is nog niet geconfigureerd. Vul config.js in.', noProfile: 'Voor dit account bestaat geen profiel.',
+    logout: 'Uitloggen', language: 'Taal', theme: 'Weergave', themeLight: 'Licht', themeDark: 'Donker', themeAuto: 'Automatisch',
+    pin: 'PIN', newPin: 'Nieuwe PIN (6 cijfers)', changePin: 'PIN wijzigen', pinChanged: 'PIN gewijzigd', pinBanner: 'Je gebruikt nog de standaard-PIN.',
+    installTitle: 'App installeren', installHint: 'Zet de app op je startscherm, dan opent hij schermvullend.',
+    installBtn: 'Toevoegen aan startscherm', installIos: 'iPhone: tik in Safari op «Deel» en kies «Zet op beginscherm».', installDone: 'De app is geïnstalleerd.',
+    roleAdmin: 'Admin', roleUser: 'Gebruiker', myAccount: 'Mijn account',
+    evUpcoming: 'Komende events', evPast: 'Afgelopen events', evEmpty: 'Er zijn momenteel geen events gepland.', evYes: 'Ik ben erbij', evNo: 'Ik ben er niet bij', evNoAnswer: 'Nog geen antwoord',
+    evParticipants: 'Erbij ({n})', evDeclined: 'Er niet bij ({n})', evNobody: 'Niemand',
+    evNew: 'Event toevoegen', evEdit: 'Event bewerken', evTitle: 'Titel', evPlace: 'Plaats', evDate: 'Datum', evTime: 'Tijd', evRsvp: 'Deelname van gebruikers nodig (aan-/afmelden)', evMissing: 'Titel, datum, tijd en plaats zijn verplicht.',
+    evDeleteAsk: 'Event «{name}» verwijderen? Alle antwoorden gaan verloren.', adminEvents: 'Events', adminUsers: 'Gebruikers', evAdminEmpty: 'Nog geen events.',
+    addUser: 'Persoon toevoegen', addUserNote: 'De persoon logt in met het mobiele nummer. De PIN zijn de laatste 6 cijfers.', userAdded: 'Persoon toegevoegd',
+    makeAdmin: 'Admin maken', revokeAdmin: 'Admin intrekken', resetPin: 'PIN resetten', resetPinAsk: 'PIN van {name} resetten naar de standaard-PIN?', pinReset: 'PIN gereset',
+    removeAsk: '{name} echt verwijderen? Account en antwoorden worden gewist.', editPhoneNote: 'Bij een nieuw nummer geldt weer de standaard-PIN.', defaultPin: 'standaard-PIN',
+    adminSub: 'Events en personen beheren', secMembers: 'Personen', you: 'Jij', actions: 'Acties', pinLampOk: 'PIN gewijzigd', pinLampNo: 'Standaard-PIN actief',
+    roleGuest: 'Gast', roleEM: 'Eventmanager', roles: 'Rollen', grpUsers: 'Gebruikers', grpGuests: 'Gasten', nobody: 'Niemand',
+    makeEM: 'Eventmanager maken', revokeEM: 'Eventmanager intrekken', makeGuest: 'Gast maken', makeUser: 'Gebruiker maken',
+    guestCheck: 'Als gast toevoegen', guestNoAdmin: 'Admins en eventmanagers kunnen geen gasten zijn.',
+    langTitle: 'Standaardtaal', langSaved: 'Standaardtaal gewijzigd', langHint: 'Geldt voor iedereen die in het profiel geen eigen taal heeft gekozen.',
+    designTitle: 'Design', designSaved: 'Design gewijzigd',
+    design_standard: 'Standard', design_standard_d: 'Blauw, rustig, zoals de FBRO-app',
+    design_holland: 'Orange', design_holland_d: 'Helemaal oranje, warm, ronde vormen',
+    design_hardrock: 'Excentric', design_hardrock_d: 'Halloween-look, oranje en paars, licht of donker',
+    design_light: 'Simple', design_light_d: 'Wit, fijne lijnen, ingetogen'
   }
 };
