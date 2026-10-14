@@ -25,7 +25,12 @@ window.APP_DICT = {
     adminSub: 'Events und Personen verwalten', secMembers: 'Personen', you: 'Du', actions: 'Aktionen', pinLampOk: 'PIN geändert', pinLampNo: 'Standard-PIN aktiv',
     roleGuest: 'Gast', roleEM: 'Event Manager', roles: 'Rollen', grpUsers: 'User', grpGuests: 'Gäste', nobody: 'Niemand',
     makeEM: 'Zum Event Manager machen', revokeEM: 'Event Manager entziehen', makeGuest: 'Zum Gast machen', makeUser: 'Zum User machen',
-    guestCheck: 'Als Gast anlegen', guestNoAdmin: 'Admins und Event Manager können keine Gäste sein.'
+    guestCheck: 'Als Gast anlegen', guestNoAdmin: 'Admins und Event Manager können keine Gäste sein.',
+    designTitle: 'Design', designSaved: 'Design geändert',
+    design_standard: 'Standard', design_standard_d: 'Blau, ruhig, wie die FBRO-App',
+    design_holland: 'Holländisch', design_holland_d: 'Delfter Blau, Oranje, runde Formen',
+    design_hardrock: 'Hard Rock', design_hardrock_d: 'Schwarz, Rot, kantig, Grossbuchstaben',
+    design_light: 'Super-Light Professional', design_light_d: 'Weiss, feine Linien, zurückhaltend'
   },
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
@@ -52,6 +57,11 @@ window.APP_DICT = {
     adminSub: 'Manage events and people', secMembers: 'People', you: 'You', actions: 'Actions', pinLampOk: 'PIN changed', pinLampNo: 'Default PIN active',
     roleGuest: 'Guest', roleEM: 'Event manager', roles: 'Roles', grpUsers: 'Users', grpGuests: 'Guests', nobody: 'Nobody',
     makeEM: 'Make event manager', revokeEM: 'Revoke event manager', makeGuest: 'Make guest', makeUser: 'Make user',
-    guestCheck: 'Add as guest', guestNoAdmin: 'Admins and event managers cannot be guests.'
+    guestCheck: 'Add as guest', guestNoAdmin: 'Admins and event managers cannot be guests.',
+    designTitle: 'Design', designSaved: 'Design changed',
+    design_standard: 'Standard', design_standard_d: 'Blue, calm, like the FBRO app',
+    design_holland: 'Dutch', design_holland_d: 'Delft blue, orange, rounded shapes',
+    design_hardrock: 'Hard rock', design_hardrock_d: 'Black, red, sharp edges, capitals',
+    design_light: 'Super-light professional', design_light_d: 'White, fine lines, understated'
   }
 };

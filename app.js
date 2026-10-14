@@ -41,6 +41,21 @@
     applyTheme();
   }
 
+  /* ---------- Design (vom Admin für alle gewählt; in app_settings gespeichert, lokal zwischengespeichert) ---------- */
+  var DESIGNS = [
+    { id: 'standard', colors: ['#307CC0', '#E3EFF9', '#F3F4F0'] },
+    { id: 'holland', colors: ['#1F3F8F', '#D9480F', '#FFF8EE'] },
+    { id: 'hardrock', colors: ['#D90B04', '#161617', '#0B0B0C'] },
+    { id: 'light', colors: ['#111827', '#E5E7EB', '#FFFFFF'] }
+  ];
+  var design = 'standard';
+  function applyDesign(d) {
+    if (!DESIGNS.some(function (x) { return x.id === d; })) d = 'standard';
+    design = d; document.documentElement.setAttribute('data-design', d);
+    try { localStorage.setItem('app-design', d); } catch (e) { /* ignorieren */ }
+  }
+  try { applyDesign(localStorage.getItem('app-design')); } catch (e) { applyDesign('standard'); }
+
   /* ---------- Telefon & PIN ---------- */
   // Akzeptiert 079 123 45 67, +41 79 …, 0041 79 …; gespeichert wird +41791234567.
   function normPhone(raw) {
@@ -140,6 +155,7 @@
     star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 2.9-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 2.9 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.8 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-2.9 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.8-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.4-1.8-2.9 0-3.4a1.7 1.7 0 0 0 1-2.5c-.9-1.6.8-3.3 2.4-2.4c1 .6 2.3 0 2.6-1.1z"/><circle cx="12" cy="12" r="3"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
     dots: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
     chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
   };
@@ -150,10 +166,12 @@
     var r = await Promise.all([
       sb.from('profiles').select('*').order('name'),
       sb.from('events').select('*').order('starts_at'),
-      sb.from('event_responses').select('*')
+      sb.from('event_responses').select('*'),
+      sb.rpc('app_design')
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
     S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data;
+    applyDesign(r[3].data);
     S.me = S.members.filter(function (m) { return m.id === uid; })[0] || null;
   }
   var reloadTimer, channel;
@@ -308,6 +326,15 @@
     var users = S.members.filter(function (m) { return !m.is_guest; }), guests = S.members.filter(function (m) { return m.is_guest; });
     var mbBody = group('g-user', L('grpUsers'), users, ICON.user) + group('g-guest', L('grpGuests'), guests, ICON.guest);
     html += accordion('members', L('secMembers'), S.members.length, mbBody, 'add-user', L('addUser'));
+    // Design der ganzen App (nur Admins)
+    var dsg = DESIGNS.map(function (d) {
+      var on = d.id === design;
+      return '<button type="button" class="dsgrow' + (on ? ' on' : '') + '" data-act="design" data-val="' + d.id + '" aria-pressed="' + on + '">' +
+        '<span class="sw">' + d.colors.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span>' +
+        '<span class="nm"><b>' + esc(L('design_' + d.id)) + '</b><span>' + esc(L('design_' + d.id + '_d')) + '</span></span>' +
+        (on ? '<span class="ok">' + ICON.check + '</span>' : '') + '</button>';
+    }).join('');
+    html += accordion('design', L('designTitle'), null, dsg);
     return html;
   }
 
@@ -315,8 +342,8 @@
   function accordion(id, title, count, body, addAct, addLabel) {
     var open = S.sec[id] !== false;   // standardmässig offen
     return '<section class="acc"><div class="acch">' +
-      '<button type="button" class="acct" data-act="sec" data-id="' + id + '" aria-expanded="' + open + '">' + esc(title) + ' <span class="cnt">(' + count + ')</span></button>' +
-      '<button type="button" class="hico" data-act="' + addAct + '" aria-label="' + esc(addLabel) + '" title="' + esc(addLabel) + '">' + ICON.plus + '</button>' +
+      '<button type="button" class="acct" data-act="sec" data-id="' + id + '" aria-expanded="' + open + '">' + esc(title) + (count == null ? '' : ' <span class="cnt">(' + count + ')</span>') + '</button>' +
+      (addAct ? '<button type="button" class="hico" data-act="' + addAct + '" aria-label="' + esc(addLabel) + '" title="' + esc(addLabel) + '">' + ICON.plus + '</button>' : '') +
       '<button type="button" class="accfold' + (open ? ' open' : '') + '" data-act="sec" data-id="' + id + '" aria-hidden="true" tabindex="-1">' + ICON.chev + '</button>' +
       '</div>' + (open ? '<div class="accbody">' + body + '</div>' : '') + '</section>';
   }
@@ -412,6 +439,7 @@
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
       case 'who': S.open['ev:' + id] = !S.open['ev:' + id]; return render();
+      case 'design': if (isAdmin() && v !== design) return rpc('set_app_design', { p_design: v }, L('designSaved')); return;
       case 'em': return rpc('set_event_manager', { target: id, flag: v === 'true' }, L('saved'));
       case 'guest': return rpc('set_guest', { target: id, flag: v === 'true' }, L('saved'));
       case 'mb-menu': if (isAdmin() && member) memberMenu(member); return;
