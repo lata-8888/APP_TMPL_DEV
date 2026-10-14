@@ -236,10 +236,12 @@
     return '<article class="ccel"><div class="cceh"><b>' + esc(fmtDay(e.starts_at)) + ' – ' + esc(e.title) + '</b>' +
       (canManageEvents() ? '<button type="button" class="hico" data-act="ev-edit" data-id="' + e.id + '" aria-label="' + esc(L('edit')) + '" title="' + esc(L('edit')) + '">' + ICON.dots + '</button>' : '') + '</div>' +
       '<div class="ccbody"><p class="muted small">' + esc(fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' +
-      '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
-      '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
-      (open ? '<div class="who"><div><h4>' + esc(L('evParticipants', { n: yes.length })) + '</h4><div class="chips">' + pills(yes) + '</div></div>' +
-        '<div><h4>' + esc(L('evDeclined', { n: no.length })) + '</h4><div class="chips">' + pills(no) + '</div></div></div>' : '') +
+      // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
+      (e.rsvp === false ? '' :
+        '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
+        '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
+        (open ? '<div class="who"><div><h4>' + esc(L('evParticipants', { n: yes.length })) + '</h4><div class="chips">' + pills(yes) + '</div></div>' +
+          '<div><h4>' + esc(L('evDeclined', { n: no.length })) + '</h4><div class="chips">' + pills(no) + '</div></div></div>' : '')) +
       '</div></article>';
   }
   function fmtDay(iso) { return new Date(iso).toLocaleDateString(LOCALE[lang], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
@@ -388,11 +390,12 @@
       { name: 'title', label: L('evTitle'), value: ev && ev.title },
       { name: 'date', label: L('evDate'), type: 'date', value: local[0], half: true },
       { name: 'time', label: L('evTime'), type: 'time', value: local[1], half: true },
-      { name: 'place', label: L('evPlace'), value: ev && ev.place }
+      { name: 'place', label: L('evPlace'), value: ev && ev.place },
+      { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : true }
     ]);
     if (!f) return;
     if (!f.title || !f.date || !f.time || !f.place) return toast(L('evMissing'));
-    var row = { title: f.title, place: f.place, starts_at: new Date(f.date + 'T' + f.time).toISOString() };
+    var row = { title: f.title, place: f.place, starts_at: new Date(f.date + 'T' + f.time).toISOString(), rsvp: !!f.rsvp };
     return act(async function () {
       var r = ev ? await sb.from('events').update(row).eq('id', ev.id) : await sb.from('events').insert(row);
       if (r.error) throw r.error;

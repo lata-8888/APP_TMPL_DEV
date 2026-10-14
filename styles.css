@@ -98,7 +98,6 @@ p{margin:0}
 .mbyou{color:var(--muted);font-weight:400;font-size:.85rem}
 .mbicons{display:inline-flex;gap:4px;flex:0 0 auto}
 .mbic{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;color:var(--crown)}
-.mbic.adm{color:var(--warn)}
 .mbic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .mbgrp{margin-bottom:6px}
 .mbgh{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0 8px;font-weight:600;font-size:1.02rem;color:var(--ink);text-align:left}
