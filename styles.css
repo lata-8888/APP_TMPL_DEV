@@ -175,3 +175,8 @@ p{margin:0}
 .tchk svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
 .tchk:hover{border-color:var(--yes)}
 .tchk.on{background:var(--yes);border-color:var(--yes);color:#fff}
+
+/* Anmeldung: Landesvorwahl + Nummer */
+.phonerow{display:flex;gap:8px}
+.fld .phonerow select{flex:0 0 auto;width:auto;max-width:44%}
+.fld .phonerow input{flex:1;min-width:0}
