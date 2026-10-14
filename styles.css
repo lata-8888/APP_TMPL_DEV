@@ -1,6 +1,6 @@
 /* Design-Tokens: nur hier Farben ändern. Dunkelmodus folgt dem Gerät, ausser data-theme ist gesetzt. */
 :root{--bg:#F4F6FA;--surface:#fff;--ink:#14213D;--muted:#5B6578;--line:#DDE2EC;--accent:#307CC0;--on-accent:#fff;--yes:#1E8E5A;--no:#C23B3B;
-  --font:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--r:14px;--tab:64px}
+  --font:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--r:14px;--tab:76px}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1626;--surface:#18223A;--ink:#EDF1F9;--muted:#9AA6BD;--line:#2A3552}}
 :root[data-theme="dark"]{--bg:#0F1626;--surface:#18223A;--ink:#EDF1F9;--muted:#9AA6BD;--line:#2A3552}
 *{box-sizing:border-box}
@@ -10,7 +10,7 @@ h1,h2,h3{margin:0 0 .6rem;line-height:1.2}
 h1{font-size:1.7rem}h2{font-size:1.2rem}h3{font-size:1.1rem}
 p{margin:.3rem 0 .8rem}
 .muted{color:var(--muted)}.pad{padding:1rem}.err{color:var(--no);font-weight:600}
-.shell{max-width:640px;margin:0 auto;padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top))}
+.shell{max-width:520px;margin:0 auto;padding:20px 16px;padding-top:max(20px,env(safe-area-inset-top))}
 .card,.ccel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:0 0 12px}
 .ccel summary{display:flex;justify-content:space-between;gap:8px;cursor:pointer;min-height:44px;align-items:center;list-style:none}
 .ccel summary::-webkit-details-marker{display:none}
@@ -32,11 +32,11 @@ p{margin:.3rem 0 .8rem}
 .segctl{display:flex;gap:6px}.segbtn{flex:1;min-height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:500 1rem var(--font);cursor:pointer}
 .segbtn.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .pinbanner{background:#FFF3CD;color:#5c4400;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding-top:max(10px,env(safe-area-inset-top))}
-.tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:flex;background:var(--surface);border-top:1px solid var(--line);z-index:20}
+.tabbar{position:fixed;left:0;right:0;bottom:0;padding:6px max(8px,calc((100% - 520px)/2)) calc(6px + env(safe-area-inset-bottom));display:flex;gap:4px;background:var(--surface);border-top:1px solid var(--line);z-index:20}
 .tabbar[hidden]{display:none}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;color:var(--muted);font:500 .72rem var(--font);cursor:pointer}
+.tab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:10px;background:none;border:0;color:var(--muted);font:600 .8rem var(--font);cursor:pointer}
 .tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tab.on{color:var(--accent)}
+.tab.on{color:var(--ink);background:var(--bg)}
 .ccsheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:50}
 .ccsheet{width:100%;max-width:520px;background:var(--surface);border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
 .ccsheet .row{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
@@ -44,3 +44,36 @@ p{margin:.3rem 0 .8rem}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 .pad0{margin-bottom:12px}.mt{margin-top:10px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.top>div{min-width:0;flex:1}
+.top p{color:var(--muted);margin-top:4px}
+.pagetitle{display:block;max-width:100%;white-space:nowrap;overflow:hidden}
+.acc{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.acch{display:flex;align-items:center;gap:10px;padding:8px 4px 8px 12px;background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.acct{flex:1;min-width:0;text-align:left;background:none;border:0;padding:4px 0;font:700 1.2rem var(--font);color:var(--accent);cursor:pointer}
+.acct .cnt{color:var(--muted);font-weight:500;font-size:.95rem}
+.accbody{padding:0 12px 10px}
+.accfold{width:34px;height:32px;border:0;background:none;color:var(--accent);padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;flex:0 0 auto;cursor:pointer}
+.accfold svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.accfold.open svg{transform:rotate(180deg)}
+.hico{width:36px;height:32px;border:0;background:none;color:var(--muted);padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;flex:0 0 auto;cursor:pointer}
+.hico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.hico svg[fill=currentColor]{fill:currentColor;stroke:none}
+.list{list-style:none;margin:0 0 6px;padding:0}
+.list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.list li:last-child{border-bottom:0}
+.list .l{flex:1 1 150px;min-width:0}
+.list .l b{display:block;overflow-wrap:anywhere}
+.list .l span{color:var(--muted);font-size:.9rem}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.mini{padding:7px 12px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--ink);font:600 .875rem var(--font);white-space:nowrap;cursor:pointer}
+.mini.del{color:var(--no);border-color:color-mix(in srgb,var(--no) 45%,var(--line))}
+.list li.mbrow{flex-wrap:nowrap;gap:8px}
+.mbrow .l{flex:1 1 auto}
+.pinlamp{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-bottom:2px}
+.pinlamp.ok{background:var(--yes)}.pinlamp.no{background:var(--no)}
+.mbyou{color:var(--muted);font-weight:400;font-size:.85rem}
+.mbicons{display:inline-flex;gap:4px;flex:0 0 auto}
+.mbic{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;color:#E0A100}
+.mbic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.ccsheet .menu{display:flex;flex-direction:column;gap:8px;margin-top:10px}

@@ -63,7 +63,7 @@
   function phoneToEmail(p) { return p.replace('+', '') + '@' + (cfg.EMAIL_DOMAIN || 'phone-login.app'); }
 
   /* ---------- Zustand ---------- */
-  var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tab: 'events', adminTab: 'events', phone: '' };
+  var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tab: 'events', sec: {}, phone: '' };
   var installEvt = null;
   var isAdmin = function () { return !!(S.me && S.me.is_admin); };
 
@@ -121,7 +121,10 @@
   var ICON = {
     cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
     user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>',
-    gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>'
+    gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+    dots: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
   };
 
   /* ---------- Daten laden & Live-Aktualisierung ---------- */
@@ -240,26 +243,49 @@
   }
 
   function viewAdmin() {
-    var seg = function (v, l) { return '<button type="button" class="segbtn' + (S.adminTab === v ? ' on' : '') + '" data-act="admin-tab" data-val="' + v + '">' + esc(l) + '</button>'; };
-    var head = '<div class="segctl pad0">' + seg('events', L('adminEvents')) + seg('users', L('adminUsers')) + '</div>';
-    if (S.adminTab === 'events') {
-      var rows = S.events.slice().reverse().map(function (e) {
-        return '<section class="card"><strong>' + esc(e.title) + '</strong><br><small class="muted">' + esc(fmtDate(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</small>' +
-          '<div class="chips mt"><button class="chip" data-act="ev-edit" data-id="' + e.id + '">' + esc(L('edit')) + '</button><button class="chip danger" data-act="ev-del" data-id="' + e.id + '">' + esc(L('del')) + '</button></div></section>';
-      }).join('');
-      return head + '<section class="card"><button class="btn" data-act="ev-new">' + esc(L('evNew')) + '</button></section>' + (rows || '<p class="muted">' + esc(L('evAdminEmpty')) + '</p>');
-    }
-    var users = S.members.map(function (m) {
-      var self = m.id === S.me.id;
-      return '<details class="ccel" data-k="u' + m.id + '"><summary><span>' + esc(m.name) + (m.is_admin ? ' ★' : '') + '</span><small class="muted">' + esc(fmtPhone(m.phone)) + (m.pin_changed ? '' : ' · ' + esc(L('defaultPin'))) + '</small></summary>' +
-        '<div class="ccbody"><div class="chips">' +
-        (!self ? '<button class="chip" data-act="admin" data-id="' + m.id + '" data-val="' + (!m.is_admin) + '">' + esc(m.is_admin ? L('revokeAdmin') : L('makeAdmin')) + '</button>' : '') +
-        '<button class="chip" data-act="edit-user" data-id="' + m.id + '">' + esc(L('edit')) + '</button>' +
-        '<button class="chip" data-act="reset-pin" data-id="' + m.id + '">' + esc(L('resetPin')) + '</button>' +
-        (!self ? '<button class="chip danger" data-act="remove" data-id="' + m.id + '">' + esc(L('remove')) + '</button>' : '') +
-        '</div></div></details>';
-    }).join('');
-    return head + '<section class="card"><button class="btn" data-act="add-user">' + esc(L('addUser')) + '</button></section>' + users;
+    // Aufbau wie in der FBRO-App: Titelzeile, Abschnitte als Akkordeon mit «+», Zeilen mit «Bearbeiten/Löschen» bzw. «…»-Menü
+    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navAdmin')) + '</h1><p>' + esc(L('adminSub')) + '</p></div></div>';
+    var evs = S.events.slice().reverse();
+    var evBody = evs.length ? '<ul class="list">' + evs.map(function (e) {
+      return '<li><div class="l"><b>' + esc(e.title) + '</b><span>' + esc(fmtDate(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</span></div>' +
+        '<div class="btnrow"><button type="button" class="mini" data-act="ev-edit" data-id="' + e.id + '">' + esc(L('edit')) + '</button>' +
+        '<button type="button" class="mini del" data-act="ev-del" data-id="' + e.id + '">' + esc(L('del')) + '</button></div></li>';
+    }).join('') + '</ul>' : '<p class="muted">' + esc(L('evAdminEmpty')) + '</p>';
+    html += accordion('events', L('adminEvents'), evs.length, evBody, 'ev-new', L('evNew'));
+    var mbBody = '<ul class="list">' + S.members.map(function (m) {
+      var self = m.id === S.me.id, lamp = m.pin_changed ? L('pinLampOk') : L('pinLampNo');
+      return '<li class="mbrow"><div class="l"><b>' + esc(m.name) + ' <span class="pinlamp ' + (m.pin_changed ? 'ok' : 'no') + '" title="' + esc(lamp) + '" aria-label="' + esc(lamp) + '"></span>' +
+        (self ? ' <span class="mbyou">' + esc(L('you')) + '</span>' : '') + '</b><span>' + esc(fmtPhone(m.phone)) + '</span></div>' +
+        '<span class="mbicons">' + (m.is_admin ? '<span class="mbic adm" title="' + esc(L('roleAdmin')) + '" aria-label="' + esc(L('roleAdmin')) + '">' + ICON.gear + '</span>' : '') + '</span>' +
+        '<button type="button" class="hico" data-act="mb-menu" data-id="' + esc(m.id) + '" aria-label="' + esc(L('actions') + ': ' + m.name) + '" title="' + esc(L('actions')) + '">' + ICON.dots + '</button></li>';
+    }).join('') + '</ul>';
+    html += accordion('members', L('secMembers'), S.members.length, mbBody, 'add-user', L('addUser'));
+    return html;
+  }
+
+  // Abschnitt mit Titel (klappt auf/zu), «+»-Knopf und Pfeil ganz rechts – wie in der FBRO-App
+  function accordion(id, title, count, body, addAct, addLabel) {
+    var open = S.sec[id] !== false;   // standardmässig offen
+    return '<section class="acc"><div class="acch">' +
+      '<button type="button" class="acct" data-act="sec" data-id="' + id + '" aria-expanded="' + open + '">' + esc(title) + ' <span class="cnt">(' + count + ')</span></button>' +
+      '<button type="button" class="hico" data-act="' + addAct + '" aria-label="' + esc(addLabel) + '" title="' + esc(addLabel) + '">' + ICON.plus + '</button>' +
+      '<button type="button" class="accfold' + (open ? ' open' : '') + '" data-act="sec" data-id="' + id + '" aria-hidden="true" tabindex="-1">' + ICON.chev + '</button>' +
+      '</div>' + (open ? '<div class="accbody">' + body + '</div>' : '') + '</section>';
+  }
+
+  // «…»-Menü einer Person: die Knöpfe tragen data-act und werden vom globalen Klick-Handler ausgeführt
+  function memberMenu(m) {
+    var self = m.id === S.me.id, wrap = document.createElement('div'); wrap.className = 'ccsheet-bg';
+    var b = function (act, label, cls, val) {
+      return '<button type="button" class="btn ' + cls + '" data-act="' + act + '" data-id="' + esc(m.id) + '"' + (val != null ? ' data-val="' + val + '"' : '') + '>' + esc(label) + '</button>';
+    };
+    wrap.innerHTML = '<div class="ccsheet" role="dialog" aria-modal="true" aria-label="' + esc(m.name) + '"><h3>' + esc(m.name) + '</h3><div class="menu">' +
+      (!self ? b('admin', m.is_admin ? L('revokeAdmin') : L('makeAdmin'), 'ghost', !m.is_admin) : '') +
+      b('edit-user', L('edit'), 'ghost') + b('reset-pin', L('resetPin'), 'ghost') +
+      (!self ? b('remove', L('remove'), 'danger') : '') +
+      '<button type="button" class="btn ghost" data-x="cancel">' + esc(L('cancel')) + '</button></div></div>';
+    document.body.appendChild(wrap);
+    wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.closest('button')) wrap.remove(); });
   }
 
   function render() {
@@ -327,7 +353,8 @@
     var rpc = function (fn, args, msg) { return act(async function () { var r = await sb.rpc(fn, args); if (r.error) throw r.error; }, msg); };
     switch (a) {
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
-      case 'admin-tab': S.adminTab = v; return render();
+      case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
+      case 'mb-menu': if (isAdmin() && member) memberMenu(member); return;
       case 'logout': return logout();
       case 'install': if (installEvt) { installEvt.prompt(); installEvt = null; render(); } return;
       case 'set-theme':

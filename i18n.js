@@ -21,7 +21,8 @@ window.APP_DICT = {
     evDeleteAsk: 'Event «{name}» löschen? Alle Antworten gehen verloren.', adminEvents: 'Events', adminUsers: 'Benutzer', evAdminEmpty: 'Noch keine Events.',
     addUser: 'Person hinzufügen', addUserNote: 'Die Person meldet sich mit der Handynummer an. Der PIN sind die letzten 6 Ziffern.', userAdded: 'Person hinzugefügt',
     makeAdmin: 'Zum Admin machen', revokeAdmin: 'Admin entziehen', resetPin: 'PIN zurücksetzen', resetPinAsk: 'PIN von {name} auf den Standard-PIN zurücksetzen?', pinReset: 'PIN zurückgesetzt',
-    removeAsk: '{name} wirklich entfernen? Konto und Antworten werden gelöscht.', editPhoneNote: 'Bei neuer Nummer gilt wieder der Standard-PIN.', defaultPin: 'Standard-PIN'
+    removeAsk: '{name} wirklich entfernen? Konto und Antworten werden gelöscht.', editPhoneNote: 'Bei neuer Nummer gilt wieder der Standard-PIN.', defaultPin: 'Standard-PIN',
+    adminSub: 'Events und Personen verwalten', secMembers: 'Personen', you: 'Du', actions: 'Aktionen', pinLampOk: 'PIN geändert', pinLampNo: 'Standard-PIN aktiv'
   },
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
@@ -44,6 +45,7 @@ window.APP_DICT = {
     evDeleteAsk: 'Delete event “{name}”? All answers will be lost.', adminEvents: 'Events', adminUsers: 'Users', evAdminEmpty: 'No events yet.',
     addUser: 'Add person', addUserNote: 'The person logs in with their mobile number. The PIN is the last 6 digits.', userAdded: 'Person added',
     makeAdmin: 'Make admin', revokeAdmin: 'Revoke admin', resetPin: 'Reset PIN', resetPinAsk: 'Reset the PIN of {name} to the default PIN?', pinReset: 'PIN reset',
-    removeAsk: 'Really remove {name}? Account and answers will be deleted.', editPhoneNote: 'With a new number the default PIN applies again.', defaultPin: 'default PIN'
+    removeAsk: 'Really remove {name}? Account and answers will be deleted.', editPhoneNote: 'With a new number the default PIN applies again.', defaultPin: 'default PIN',
+    adminSub: 'Manage events and people', secMembers: 'People', you: 'You', actions: 'Actions', pinLampOk: 'PIN changed', pinLampNo: 'Default PIN active'
   }
 };
