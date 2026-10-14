@@ -128,27 +128,30 @@ p{margin:0}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== Designs (vom Admin wählbar): data-design am <html>. «standard» = die Tokens oben. ===== */
-/* Holländisch: Delfter Blau, Oranje, Flaggenstreifen, runde Formen */
-:root[data-design="holland"]{--bg:#FFF8EE;--surface:#fff;--ink:#1B2A55;--muted:#5E6A8C;--line:#EBDDC8;--crown:#1F3F8F;--crown-soft:#E4EBFA;--btn-bg:#D9480F;--btn-fg:#fff;--yes:#2E7D32;--yes-soft:#E1F2E2;--no:#B3261E;--no-soft:#FBE4E1;--focus:#D9480F;
+/* Holländisch: durchgehend Oranje (Titel, Knöpfe, Streifen), warme Töne, runde Formen */
+:root[data-design="holland"]{--bg:#FFF7ED;--surface:#fff;--ink:#431407;--muted:#7C4A2D;--line:#F3D9BF;--crown:#C2410C;--crown-soft:#FFEDD5;--btn-bg:#C2410C;--btn-fg:#fff;--yes:#2E7D32;--yes-soft:#E1F2E2;--no:#B3261E;--no-soft:#FBE4E1;--focus:#EA580C;
   --r-card:20px;--r-btn:14px;--font-head:"Fredoka","Arial Rounded MT Bold",Arial,sans-serif;--font:"Nunito","Helvetica Neue",Arial,sans-serif;--head-ls:0}
-@media(prefers-color-scheme:dark){:root[data-design="holland"]:not([data-theme="light"]){--bg:#0E1630;--surface:#17224A;--ink:#F2F5FF;--muted:#A9B4D8;--line:#2B3A6E;--crown:#8FB0FF;--crown-soft:#1E2D5E;--btn-bg:#F08A3C;--btn-fg:#1B0F00;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#FFB074}}
-:root[data-design="holland"][data-theme="dark"]{--bg:#0E1630;--surface:#17224A;--ink:#F2F5FF;--muted:#A9B4D8;--line:#2B3A6E;--crown:#8FB0FF;--crown-soft:#1E2D5E;--btn-bg:#F08A3C;--btn-fg:#1B0F00;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#FFB074}
-:root[data-design="holland"] body::before{content:"";display:block;height:8px;background:linear-gradient(90deg,#AE1C28 0 33.3%,#fff 33.3% 66.6%,#21468B 66.6% 100%)}
+@media(prefers-color-scheme:dark){:root[data-design="holland"]:not([data-theme="light"]){--bg:#1F0F05;--surface:#2B1708;--ink:#FFEDD5;--muted:#E0B48C;--line:#4A2A12;--crown:#FDBA74;--crown-soft:#3A1D0A;--btn-bg:#FB923C;--btn-fg:#1F0F05;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#FDBA74}}
+:root[data-design="holland"][data-theme="dark"]{--bg:#1F0F05;--surface:#2B1708;--ink:#FFEDD5;--muted:#E0B48C;--line:#4A2A12;--crown:#FDBA74;--crown-soft:#3A1D0A;--btn-bg:#FB923C;--btn-fg:#1F0F05;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#FDBA74}
+:root[data-design="holland"] body::before{content:"";display:block;height:8px;background:#F97316}
 :root[data-design="holland"] .resp,:root[data-design="holland"] .chip,:root[data-design="holland"] .ccp{border-radius:999px}
 
-/* Hard Rock: schwarz, Rot, Oswald in Grossbuchstaben, kantig (immer dunkel) */
-:root[data-design="hardrock"]{--bg:#0B0B0C;--surface:#161617;--ink:#F2F2F2;--muted:#A0A0A4;--line:#34343A;--crown:#FF3B30;--crown-soft:#2A0E0D;--btn-bg:#D90B04;--btn-fg:#fff;--onink:#0B0B0C;--yes:#3DDC84;--yes-soft:#12301F;--no:#FF5A52;--no-soft:#3A1412;--open:#3A3A40;--focus:#FF3B30;
-  --r-card:2px;--r-btn:2px;--head-tt:uppercase;--head-ls:.06em;--font-head:"Oswald","Arial Narrow",Impact,sans-serif;--font:"Barlow","Helvetica Neue",Arial,sans-serif}
-:root[data-design="hardrock"] body::before{content:"";display:block;height:5px;background:#D90B04}
-:root[data-design="hardrock"] .cceh,:root[data-design="hardrock"] .acch{border-left:4px solid var(--crown)}
+/* Exzentrisch: Halloween-Look, Orange und Violett; hell = Pergament, dunkel = Nacht */
+:root[data-design="hardrock"]{--bg:#FFF4E0;--surface:#FFFDF7;--ink:#2A1536;--muted:#6E5A7E;--line:#E7CFA8;--crown:#5B2A86;--crown-soft:#F1E3FF;--btn-bg:#D9480F;--btn-fg:#fff;--yes:#2F855A;--yes-soft:#E1F2E2;--no:#C53030;--no-soft:#FBE4E1;--focus:#5B2A86;
+  --r-card:6px;--r-btn:6px;--head-tt:uppercase;--head-ls:.05em;--font-head:"Oswald","Arial Narrow",Impact,sans-serif;--font:"Barlow","Helvetica Neue",Arial,sans-serif}
+@media(prefers-color-scheme:dark){:root[data-design="hardrock"]:not([data-theme="light"]){--bg:#0D0A12;--surface:#17111F;--ink:#F5EDE0;--muted:#B6A8C4;--line:#3A2A4D;--crown:#FF7A00;--crown-soft:#2A1740;--btn-bg:#FF7A00;--btn-fg:#14091F;--yes:#7CE08A;--yes-soft:#16341E;--no:#FF5D73;--no-soft:#401521;--focus:#B26CFF}}
+:root[data-design="hardrock"][data-theme="dark"]{--bg:#0D0A12;--surface:#17111F;--ink:#F5EDE0;--muted:#B6A8C4;--line:#3A2A4D;--crown:#FF7A00;--crown-soft:#2A1740;--btn-bg:#FF7A00;--btn-fg:#14091F;--yes:#7CE08A;--yes-soft:#16341E;--no:#FF5D73;--no-soft:#401521;--focus:#B26CFF}
+:root[data-design="hardrock"] body::before{content:"";display:block;height:10px;background:repeating-linear-gradient(135deg,#FF7A00 0 10px,#2A1740 10px 20px)}
+:root[data-design="hardrock"] h1{font-family:"Creepster","Oswald",Impact,sans-serif;font-weight:400;letter-spacing:.04em;text-transform:none;font-size:2.8rem}
+:root[data-design="hardrock"] .cceh,:root[data-design="hardrock"] .acch{border-left:4px solid #FF7A00;border-bottom:1px dashed var(--line)}
+:root[data-design="hardrock"] .card,:root[data-design="hardrock"] .ccel,:root[data-design="hardrock"] .acc{border-color:color-mix(in srgb,var(--crown) 40%,var(--line))}
 :root[data-design="hardrock"] .btn.ghost{color:var(--ink)}
 :root[data-design="hardrock"] .btn.danger{color:var(--no)}
-:root[data-design="hardrock"] .segbtn.on{background:#D90B04;border-color:#D90B04}
-:root[data-design="hardrock"] .resp,:root[data-design="hardrock"] .chip,:root[data-design="hardrock"] .ccp,:root[data-design="hardrock"] .mini,:root[data-design="hardrock"] .tab{border-radius:2px}
-:root[data-design="hardrock"] .tab.on{background:#2A0E0D;color:#FF3B30}
-:root[data-design="hardrock"] .tabbar{border-top:2px solid #D90B04}
-
-/* Super-Light Professional: weiss, Hairlines, Inter, zurückhaltend */
+:root[data-design="hardrock"] .segbtn.on{background:var(--btn-bg);border-color:var(--btn-bg);color:var(--btn-fg)}
+:root[data-design="hardrock"] .tab.on{background:var(--crown-soft);color:var(--crown)}
+:root[data-design="hardrock"] .tabbar{border-top:3px solid #FF7A00}
+:root[data-design="hardrock"] .resp,:root[data-design="hardrock"] .chip,:root[data-design="hardrock"] .ccp{border-radius:4px}
+/* Dezent (Super-Light Professional): weiss, Hairlines, Inter, zurückhaltend */
 :root[data-design="light"]{--bg:#FFFFFF;--surface:#fff;--ink:#111827;--muted:#6B7280;--line:#E5E7EB;--crown:#374151;--crown-soft:#F9FAFB;--btn-bg:#111827;--btn-fg:#fff;--yes:#047857;--yes-soft:#ECFDF5;--no:#B42318;--no-soft:#FEF3F2;--focus:#2563EB;
   --r-card:8px;--r-btn:6px;--head-ls:-.01em;--font-head:"Inter","Helvetica Neue",Arial,sans-serif;--font:"Inter","Helvetica Neue",Arial,sans-serif}
 @media(prefers-color-scheme:dark){:root[data-design="light"]:not([data-theme="light"]){--bg:#0B0C0E;--surface:#121316;--ink:#F3F4F6;--muted:#9CA3AF;--line:#26282D;--crown:#D1D5DB;--crown-soft:#17181C;--btn-bg:#F3F4F6;--btn-fg:#111827;--yes:#34D399;--yes-soft:#0F2A22;--no:#F97066;--no-soft:#2E1513;--focus:#60A5FA}}

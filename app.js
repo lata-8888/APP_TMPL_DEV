@@ -44,8 +44,8 @@
   /* ---------- Design (vom Admin für alle gewählt; in app_settings gespeichert, lokal zwischengespeichert) ---------- */
   var DESIGNS = [
     { id: 'standard', colors: ['#307CC0', '#E3EFF9', '#F3F4F0'] },
-    { id: 'holland', colors: ['#1F3F8F', '#D9480F', '#FFF8EE'] },
-    { id: 'hardrock', colors: ['#D90B04', '#161617', '#0B0B0C'] },
+    { id: 'holland', colors: ['#C2410C', '#F97316', '#FFF7ED'] },
+    { id: 'hardrock', colors: ['#FF7A00', '#5B2A86', '#0D0A12'] },
     { id: 'light', colors: ['#111827', '#E5E7EB', '#FFFFFF'] }
   ];
   var design = 'standard';

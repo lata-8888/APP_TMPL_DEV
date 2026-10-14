@@ -28,9 +28,9 @@ window.APP_DICT = {
     guestCheck: 'Als Gast anlegen', guestNoAdmin: 'Admins und Event Manager können keine Gäste sein.',
     designTitle: 'Design', designSaved: 'Design geändert',
     design_standard: 'Standard', design_standard_d: 'Blau, ruhig, wie die FBRO-App',
-    design_holland: 'Holländisch', design_holland_d: 'Delfter Blau, Oranje, runde Formen',
-    design_hardrock: 'Hard Rock', design_hardrock_d: 'Schwarz, Rot, kantig, Grossbuchstaben',
-    design_light: 'Super-Light Professional', design_light_d: 'Weiss, feine Linien, zurückhaltend'
+    design_holland: 'Holländisch', design_holland_d: 'Durchgehend Oranje, warm, runde Formen',
+    design_hardrock: 'Exzentrisch', design_hardrock_d: 'Halloween-Look, Orange und Violett, hell oder dunkel',
+    design_light: 'Dezent', design_light_d: 'Weiss, feine Linien, zurückhaltend'
   },
   en: {
     cancel: 'Cancel', confirm: 'Confirm', save: 'Save', saved: 'Saved', error: 'Error', edit: 'Edit', remove: 'Remove', removed: 'Removed', del: 'Delete',
@@ -60,8 +60,8 @@ window.APP_DICT = {
     guestCheck: 'Add as guest', guestNoAdmin: 'Admins and event managers cannot be guests.',
     designTitle: 'Design', designSaved: 'Design changed',
     design_standard: 'Standard', design_standard_d: 'Blue, calm, like the FBRO app',
-    design_holland: 'Dutch', design_holland_d: 'Delft blue, orange, rounded shapes',
-    design_hardrock: 'Hard rock', design_hardrock_d: 'Black, red, sharp edges, capitals',
-    design_light: 'Super-light professional', design_light_d: 'White, fine lines, understated'
+    design_holland: 'Dutch', design_holland_d: 'All orange, warm, rounded shapes',
+    design_hardrock: 'Eccentric', design_hardrock_d: 'Halloween look, orange and violet, light or dark',
+    design_light: 'Subtle', design_light_d: 'White, fine lines, understated'
   }
 };
