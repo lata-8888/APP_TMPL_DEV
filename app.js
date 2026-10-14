@@ -435,7 +435,7 @@
 
   function render() {
     var app = document.getElementById('app'), nav = document.getElementById('nav');
-    if (!configured) { app.innerHTML = '<main class="authwrap"><div class="authcard"><h1>Setup</h1><p>' + esc(L('notConfigured')) + '</p></div></main>'; nav.hidden = true; return; }
+    if (!configured) { app.innerHTML = '<main class="authwrap"><div class="authcard"><h1>' + esc(L('setupTitle')) + '</h1><p>' + esc(L('notConfigured')) + '</p></div></main>'; nav.hidden = true; return; }
     if (S.step === 'loading') { app.innerHTML = '<main class="authwrap"><p class="muted">…</p></main>'; nav.hidden = true; return; }
     if (S.step === 'login') { app.innerHTML = viewLogin(); nav.hidden = true; return; }
     // Reihenfolge wie in der FBRO-App: Profil steht ganz rechts
