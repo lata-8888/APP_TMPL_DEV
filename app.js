@@ -47,7 +47,6 @@
   var DESIGNS = [
     { id: 'standard', colors: ['#307CC0', '#E3EFF9', '#F3F4F0'] },
     { id: 'holland', colors: ['#EA580C', '#F97316', '#FFF7ED'] },
-    { id: 'hardrock', colors: ['#FF7A00', '#5B2A86', '#0D0A12'] },
     { id: 'light', colors: ['#111827', '#E5E7EB', '#FFFFFF'] }
   ];
   var design = 'standard';
