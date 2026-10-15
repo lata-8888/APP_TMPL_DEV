@@ -196,3 +196,11 @@ p{margin:0}
 .wd span{display:block;text-align:center;padding:10px 0;border:1.5px solid var(--line);border-radius:var(--r-btn);font-weight:600;font-size:.9rem;background:var(--surface)}
 .wd input:checked + span{background:var(--crown);border-color:var(--crown);color:#fff}
 .wd input:focus-visible + span{outline:3px solid var(--focus);outline-offset:2px}
+
+/* Petrol: tiefes Blaugrün, kühle Flächen, ruhig und kräftig zugleich */
+:root[data-design="petrol"]{--bg:#EEF5F6;--surface:#fff;--ink:#0A2A32;--muted:#4C6F78;--line:#CBDFE3;--crown:#0E5F6F;--crown-soft:#D9ECEF;--btn-bg:#0E6B7C;--btn-fg:#fff;--yes:#2E7D32;--yes-soft:#E1F2E2;--no:#B3261E;--no-soft:#FBE4E1;--focus:#0E8FA6;
+  --r-card:14px;--r-btn:10px;--head-ls:0}
+@media(prefers-color-scheme:dark){:root[data-design="petrol"]:not([data-theme="light"]){--bg:#061519;--surface:#0C262D;--ink:#E2F3F6;--muted:#8FB6BF;--line:#17404A;--crown:#5CCADB;--crown-soft:#0E2F37;--btn-bg:#2BAFC4;--btn-fg:#04181D;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#5CCADB}}
+:root[data-design="petrol"][data-theme="dark"]{--bg:#061519;--surface:#0C262D;--ink:#E2F3F6;--muted:#8FB6BF;--line:#17404A;--crown:#5CCADB;--crown-soft:#0E2F37;--btn-bg:#2BAFC4;--btn-fg:#04181D;--yes:#5CD08A;--yes-soft:#17382A;--no:#FF8A80;--no-soft:#43211F;--focus:#5CCADB}
+:root[data-design="petrol"] body::before{content:"";display:block;height:6px;background:linear-gradient(90deg,#0E5F6F,#2BAFC4)}
+:root[data-design="petrol"] .cceh,:root[data-design="petrol"] .acch{background:var(--crown-soft);border-left:4px solid var(--crown)}

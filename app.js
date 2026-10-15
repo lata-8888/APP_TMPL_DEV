@@ -48,9 +48,11 @@
   var DESIGNS = [
     { id: 'standard', colors: ['#307CC0', '#E3EFF9', '#F3F4F0'] },
     { id: 'holland', colors: ['#EA580C', '#F97316', '#FFF7ED'] },
-    { id: 'light', colors: ['#111827', '#E5E7EB', '#FFFFFF'] }
+    { id: 'light', colors: ['#111827', '#E5E7EB', '#FFFFFF'] },
+    { id: 'petrol', colors: ['#0E5F6F', '#2BAFC4', '#EAF4F6'] }
   ];
-  var design = 'standard';
+  var design = 'standard';        // wirksames Design (eigene Wahl, sonst Standard des Admins)
+  var adminDesign = 'standard';   // Standard-Design der App (vom Admin)
   function applyDesign(d) {
     if (!DESIGNS.some(function (x) { return x.id === d; })) d = 'standard';
     design = d; document.documentElement.setAttribute('data-design', d);
@@ -251,10 +253,12 @@
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
     S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data; S.tasks = r[5].data;
-    applyDesign(r[3].data);
+    adminDesign = DESIGNS.some(function (x) { return x.id === r[3].data; }) ? r[3].data : 'standard';
     S.defaultLang = LANGS.indexOf(r[4].data) > -1 ? r[4].data : 'de';
     try { localStorage.setItem('app-default-lang', S.defaultLang); } catch (e) { /* ignorieren */ }
     S.me = S.members.filter(function (m) { return m.id === uid; })[0] || null;
+    // jede Person kann ihr Design selbst wählen; ohne eigene Wahl gilt das Standard-Design des Admins
+    applyDesign(S.me && DESIGNS.some(function (x) { return x.id === S.me.design; }) ? S.me.design : adminDesign);
     // Sprache: eigene Wahl im Profil, sonst die Standardsprache der App
     if (S.me) setLang(LANGS.indexOf(S.me.language) > -1 ? S.me.language : S.defaultLang);
   }
@@ -459,6 +463,7 @@
       '<label class="fld"><span>' + esc(L('language')) + '</span><select name="language">' + LANGS.map(function (l) { return '<option value="' + l + '"' + (l === lang ? ' selected' : '') + '>' + LANG_NAMES[l] + '</option>'; }).join('') + '</select></label>' +
       '<button class="btn" type="submit">' + esc(L('save')) + '</button></form></section>' +
       '<section class="card"><h2>' + esc(L('theme')) + '</h2><div class="segctl">' + opt('light', L('themeLight')) + opt('dark', L('themeDark')) + opt('', L('themeAuto')) + '</div></section>' +
+      '<section class="card"><h2>' + esc(L('designTitle')) + '</h2><div class="segctl">' + DESIGNS.map(function (d) { return '<button type="button" class="segbtn' + (design === d.id ? ' on' : '') + '" data-act="set-design" data-val="' + d.id + '" aria-pressed="' + (design === d.id) + '">' + esc(L('design_' + d.id)) + '</button>'; }).join('') + '</div></section>' +
       '<section class="card"><h2>' + esc(L('pin')) + '</h2><form data-form="pin">' + fld(L('newPin'), 'pin', 'password', '', 'inputmode="numeric" maxlength="6"') +
       '<button class="btn" type="submit">' + esc(L('changePin')) + '</button></form></section>' +
       '<section class="card"><h2>' + esc(L('installTitle')) + '</h2>' + install + '</section>' +
@@ -498,13 +503,13 @@
     html += accordion('members', L('secMembers'), S.members.length, mbBody, 'add-user', L('addUser'));
     // Design der ganzen App (nur Admins)
     var dsg = DESIGNS.map(function (d) {
-      var on = d.id === design;
+      var on = d.id === adminDesign;
       return '<button type="button" class="dsgrow' + (on ? ' on' : '') + '" data-act="design" data-val="' + d.id + '" aria-pressed="' + on + '">' +
         '<span class="sw">' + d.colors.map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span>' +
         '<span class="nm"><b>' + esc(L('design_' + d.id)) + '</b><span>' + esc(L('design_' + d.id + '_d')) + '</span></span>' +
         (on ? '<span class="ok">' + ICON.check + '</span>' : '') + '</button>';
     }).join('');
-    html += accordion('design', L('designTitle'), null, dsg);
+    html += accordion('design', L('designDefault'), null, dsg);
     // Standardsprache der App (nur Admins); Personen können sie im Profil überschreiben
     var lng = '<p class="muted small" style="margin-bottom:10px">' + esc(L('langHint')) + '</p>' + LANGS.map(function (l) {
       var on = l === S.defaultLang;
@@ -765,12 +770,17 @@
         return;
       }
       case 'applang': if (isAdmin() && v !== S.defaultLang) return rpc('set_app_language', { p_lang: v }, L('langSaved')); return;
-      case 'design': if (isAdmin() && v !== design) return rpc('set_app_design', { p_design: v }, L('designSaved')); return;
+      case 'design': if (isAdmin() && v !== adminDesign) return rpc('set_app_design', { p_design: v }, L('designSaved')); return;
       case 'em': return rpc('set_event_manager', { target: id, flag: v === 'true' }, L('saved'));
       case 'guest': return rpc('set_guest', { target: id, flag: v === 'true' }, L('saved'));
       case 'mb-menu': if (isAdmin() && member) memberMenu(member); return;
       case 'logout': return logout();
       case 'install': if (installEvt) { installEvt.prompt(); installEvt = null; render(); } return;
+      case 'set-design':
+        if (!DESIGNS.some(function (x) { return x.id === v; })) return;
+        S.me.design = v; applyDesign(v); render();
+        sb.from(T('profiles')).update({ design: v }).eq('id', S.me.id).then(function () {}, function (e2) { console.error(e2); });
+        return;
       case 'set-theme':
         setTheme(v); render();
         sb.from('profiles').update({ theme: v || null }).eq('id', S.me.id).then(function () {}, function () {});
