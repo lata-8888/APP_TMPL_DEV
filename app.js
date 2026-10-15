@@ -241,6 +241,7 @@
     guest: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 3.5-7 8-7M17 14v6M14 17h6"/></svg>',
     star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>',
     gear: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 2.9-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 2.9 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.8 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-2.9 1.8-3.4 0a1.7 1.7 0 0 0-2.6-1c-1.5.9-3.3-.8-2.4-2.4a1.7 1.7 0 0 0-1-2.6c-1.8-.4-1.8-2.9 0-3.4a1.7 1.7 0 0 0 1-2.5c-.9-1.6.8-3.3 2.4-2.4c1 .6 2.3 0 2.6-1.1z"/><circle cx="12" cy="12" r="3"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
     tasks: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/></svg>',
@@ -441,7 +442,6 @@
       html += '<button type="button" class="morebtn" data-act="ev-more" aria-expanded="' + more + '"><span>' + esc(L('evMore', { n: far.length })) + '</span>' + ICON.chev + '</button>';
       if (more) html += monthList(far);
     }
-    if (past.length) html += '<h2 class="week">' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('');
     return html;
   }
 
@@ -506,11 +506,13 @@
       : installEvt ? '<p class="muted">' + esc(L('installHint')) + '</p><button class="btn" data-act="install">' + esc(L('installBtn')) + '</button>'
       : '<p class="muted">' + esc(ios ? L('installIos') : L('installHint')) + '</p>';
     return '<div class="top"><div><h1 class="pagetitle">' + esc(L('navProfile')) + '</h1></div></div>' +
-      '<section class="card"><h2>' + esc(L('myAccount')) + '</h2><p class="muted">' + esc(fmtPhone(S.me.phone)) + '</p>' +
-      '<div class="profile-row"><span class="muted">' + esc(L('roles')) + '</span><span class="chips">' + roleLabels(S.me).map(function (r) { return '<span class="ccp">' + esc(r) + '</span>'; }).join('') + '</span></div>' +
-      '<form data-form="profile">' + fld(L('fullName'), 'name', 'text', S.me.name) +
-      '<label class="fld"><span>' + esc(L('language')) + '</span><select name="language">' + LANGS.map(function (l) { return '<option value="' + l + '"' + (l === lang ? ' selected' : '') + '>' + LANG_NAMES[l] + '</option>'; }).join('') + '</select></label>' +
-      '<button class="btn" type="submit">' + esc(L('save')) + '</button></form></section>' +
+      '<section class="card"><h2>' + esc(L('myAccount')) + '</h2>' +
+      '<button type="button" class="profrow" data-act="edit-name"><span class="muted">' + esc(L('fullName')) + '</span><b>' + esc(S.me.name) + '</b>' + ICON.edit + '</button>' +
+      '<button type="button" class="profrow" data-act="edit-phone"><span class="muted">' + esc(L('phone')) + '</span><b>' + esc(fmtPhone(S.me.phone)) + '</b>' + ICON.edit + '</button>' +
+      '<div class="profile-row"><span class="muted">' + esc(L('roles')) + '</span><span class="chips">' + roleLabels(S.me).map(function (r) { return '<span class="ccp">' + esc(r) + '</span>'; }).join('') + '</span></div></section>' +
+      '<section class="card"><h2>' + esc(L('language')) + '</h2><div class="segctl">' + LANGS.map(function (l) {
+        return '<button type="button" class="segbtn' + (l === lang ? ' on' : '') + '" data-act="set-lang" data-val="' + l + '" aria-pressed="' + (l === lang) + '">' + esc(LANG_NAMES[l]) + '</button>';
+      }).join('') + '</div></section>' +
       '<section class="card"><h2>' + esc(L('theme')) + '</h2><div class="segctl">' + opt('light', L('themeLight')) + opt('dark', L('themeDark')) + opt('', L('themeAuto')) + '</div></section>' +
       '<section class="card"><h2>' + esc(L('designTitle')) + '</h2><div class="segctl">' + DESIGNS.map(function (d) { return '<button type="button" class="segbtn' + (design === d.id ? ' on' : '') + '" data-act="set-design" data-val="' + d.id + '" aria-pressed="' + (design === d.id) + '">' + esc(L('design_' + d.id)) + '</button>'; }).join('') + '</div></section>' +
       '<section class="card"><h2>' + esc(L('pin')) + '</h2><form data-form="pin">' + fld(L('newPin'), 'pin', 'password', '', 'inputmode="numeric" maxlength="6"') +
@@ -879,6 +881,22 @@
         if (!DESIGNS.some(function (x) { return x.id === v; })) return;
         S.me.design = v; applyDesign(v); render();
         sb.from(T('profiles')).update({ design: v }).eq('id', S.me.id).then(function () {}, function (e2) { console.error(e2); });
+        return;
+      case 'edit-name': {
+        var nameF = await askForm(L('fullName'), [{ name: 'name', label: L('fullName'), value: S.me.name }]);
+        if (!nameF || !nameF.name || nameF.name === S.me.name) return;
+        return act(async function () { var r = await sb.from(T('profiles')).update({ name: nameF.name }).eq('id', S.me.id); if (r.error) throw r.error; }, L('saved'));
+      }
+      case 'edit-phone': {
+        var phoneF = await askForm(L('phone'), [{ name: 'phone', label: L('phone'), type: 'phone', value: S.me.phone }], null, L('editPhonePin'));
+        if (!phoneF) return;
+        var ph3 = normPhone(phoneF.phone); if (!ph3) return toast(L('phoneInvalid'));
+        if (ph3 === S.me.phone) return;
+        return rpc('update_own_phone', { new_phone: ph3 }, L('phoneChangedPin'));
+      }
+      case 'set-lang':
+        setLang(v); S.me.language = v; render();
+        sb.from(T('profiles')).update({ language: v }).eq('id', S.me.id).then(function () {}, function (e2) { console.error(e2); });
         return;
       case 'set-theme':
         setTheme(v); render();
