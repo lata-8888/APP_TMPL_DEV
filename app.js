@@ -667,8 +667,8 @@
     var inSeries = ev.series_id && S.events.filter(function (x) { return x.series_id === ev.series_id; }).length > 1;
     var scope = 'one';
     if (inSeries) {
-      var sf = await askForm(L('del'), [{ name: 'scope', label: L('evDelScope'), type: 'select', value: 'one', options: [
-        { v: 'one', l: L('evDelOne') }, { v: 'future', l: L('evDelFuture') }, { v: 'all', l: L('evDelAll') }] }], L('del'), L('evDeleteAsk', { name: ev.title }));
+      var sf = await askForm(L('del'), [{ name: 'scope', label: L('evDelScope'), type: 'select', value: 'future', options: [
+        { v: 'future', l: L('evDelFuture') }, { v: 'one', l: L('evDelOne') }, { v: 'all', l: L('evDelAll') }] }], L('del'), L('evDeleteAsk', { name: ev.title }));
       if (!sf) return;
       scope = sf.scope;
     } else if (!(await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))) return;
