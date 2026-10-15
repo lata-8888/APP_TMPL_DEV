@@ -230,3 +230,5 @@ p{margin:0}
 .cceh .accfold{margin-left:auto}
 .cceh b + .hico,.cceh b + .accfold{margin-left:auto}
 .cceh .hico + .accfold{margin-left:0}
+.chklist{display:grid;gap:2px;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-btn,10px);padding:6px 10px;background:var(--surface)}
+.chklist .check{margin:0}

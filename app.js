@@ -131,6 +131,7 @@
   // Admin: alle Teilbereiche sind beim Öffnen eingeklappt
   var ADMIN_KEYS = ['events', 'members', 'recur', 'design', 'lang', 'a-tasks', 'g-user', 'g-guest'];
   ADMIN_KEYS.forEach(function (k) { S.sec[k] = false; });
+  S.assign = [];   // Zuteilung von Events an Personen: { event_id, user_id }
   var installEvt = null;
   var isAdmin = function () { return !!(S.me && S.me.is_admin); };
   var canManageEvents = function () { return !!(S.me && (S.me.is_admin || S.me.is_event_manager)); };   // Admin oder Event Manager
@@ -158,6 +159,9 @@
           var html;
           if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
           else if (f.type === 'recurrence') html = recurrenceBlock();
+          else if (f.type === 'multi') html = '<div class="fld"><span>' + esc(f.label) + '</span><div class="chklist">' + f.options.map(function (o) {
+            return '<label class="check"><input type="checkbox" name="' + f.name + '" value="' + esc(o.v) + '"' + ((f.value || []).indexOf(o.v) > -1 ? ' checked' : '') + '><span>' + esc(o.l) + '</span></label>';
+          }).join('') + '</div></div>';
           else if (f.type === 'note') html = '<p class="muted small recinfo">' + esc(f.text) + '</p>';
           else if (f.type === 'phone') html = '<div class="fld"><span>' + esc(f.label) + '</span>' + phoneField(f.value) + '</div>';
           else if (f.type === 'select') html = '<label class="fld"><span>' + esc(f.label) + '</span><select name="' + f.name + '">' + f.options.map(function (o) {
@@ -179,6 +183,7 @@
         var out = {};
         fields.forEach(function (f) {
           if (f.type === 'note') return;
+          if (f.type === 'multi') { out[f.name] = Array.prototype.map.call(form.querySelectorAll('input[name="' + f.name + '"]:checked'), function (i) { return i.value; }); return; }
           if (f.type === 'recurrence') {
             out.every = parseInt(form.elements.every.value, 10) || 1;
             out.unit = form.elements.unit.value;
@@ -254,6 +259,8 @@
       sb.from('tasks').select('*').order('due_date')
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
+    var ra = await sb.from(T('event_assignees')).select('*'); if (ra.error) throw ra.error;
+    S.assign = ra.data || [];
     S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data; S.tasks = r[5].data;
     adminDesign = DESIGNS.some(function (x) { return x.id === r[3].data; }) ? r[3].data : 'standard';
     S.defaultLang = LANGS.indexOf(r[4].data) > -1 ? r[4].data : 'de';
@@ -342,8 +349,9 @@
       }).join('') : '<span class="small muted">' + esc(L('evNobody')) + '</span>';
     };
     var btn = function (v, cls, label) { return '<button type="button" class="resp ' + cls + '" data-act="answer" data-id="' + e.id + '" data-val="' + v + '" aria-pressed="' + !!(mine && mine.answer === v) + '">' + esc(label) + '</button>'; };
-    var info = !!S.open['evc:' + e.id];   // Zeit und Ort: standardmässig eingeklappt
-    var infoHtml = info ? '<p class="muted small">' + esc(e.time_set === false ? L('evNoTime') : fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' : '';
+    var info = !!S.open['evc:' + e.id];
+    var asg = S.assign.filter(function (x) { return x.event_id === e.id; });   // Zeit und Ort: standardmässig eingeklappt
+    var infoHtml = info ? '<p class="muted small">' + esc(e.time_set === false ? L('evNoTime') : fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' + (asg.length ? '<div class="who"><div><h4>' + esc(L('evAssigned', { n: asg.length })) + '</h4><div class="chips">' + pills(asg) + '</div></div></div>' : '') : '';
     // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
     var rsvpHtml = e.rsvp === false ? '' :
       '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
@@ -643,21 +651,25 @@
   // unbegrenzte Serien laufend bis ein Jahr voraus ergänzen (nur Admin/Event Manager, beim Öffnen)
   async function extendSeries() {
     if (!canManageEvents()) return;
-    var bySid = {};
+    var bySid = {}, changed = false;
     S.events.forEach(function (e) { if (e.series_id && e.series_open && e.series_rule) (bySid[e.series_id] = bySid[e.series_id] || []).push(e); });
-    var rows = [];
-    Object.keys(bySid).forEach(function (sid) {
-      var list = bySid[sid], r = list[0].series_rule;
-      var last = Math.max.apply(null, list.map(function (e) { return new Date(e.starts_at).getTime(); }));
+    var sids = Object.keys(bySid);
+    for (var si = 0; si < sids.length; si++) {
+      var sid = sids[si], list = bySid[sid].sort(function (x, y) { return new Date(x.starts_at) - new Date(y.starts_at); });
+      var lastEv = list[list.length - 1], r = lastEv.series_rule, last = new Date(lastEv.starts_at).getTime(), rows = [];
       genOccurrences(r.start, r.time, r.every, r.unit, r.wd, oneYear(), today()).forEach(function (iso) {
-        if (new Date(iso).getTime() > last) rows.push({ title: list[0].title, place: list[0].place, rsvp: list[0].rsvp, time_set: list[0].time_set, starts_at: iso, series_id: sid, series_open: true, series_rule: r });
+        if (new Date(iso).getTime() > last) rows.push({ title: lastEv.title, place: lastEv.place, rsvp: lastEv.rsvp, time_set: lastEv.time_set, starts_at: iso, series_id: sid, series_open: true, series_rule: r });
       });
-    });
-    if (!rows.length) return;
-    var res = await sb.from(T('events')).insert(rows);
-    if (res.error) console.error(res.error); else await loadAll();
-  }
-  function recurrenceBlock() {
+      if (!rows.length) continue;
+      var res = await sb.from(T('events')).insert(rows).select('id');
+      if (res.error) { console.error(res.error); continue; }
+      var users = S.assign.filter(function (x) { return x.event_id === lastEv.id; }).map(function (x) { return x.user_id; }), ar = [];
+      res.data.forEach(function (nw) { users.forEach(function (u) { ar.push({ event_id: nw.id, user_id: u }); }); });
+      if (ar.length) { var ra2 = await sb.from(T('event_assignees')).insert(ar); if (ra2.error) console.error(ra2.error); }
+      changed = true;
+    }
+    if (changed) await loadAll();
+  }  function recurrenceBlock() {
     var sel = function (name, label, opts, val, extra) {
       return '<label class="fld"' + (extra || '') + '><span>' + esc(label) + '</span><select name="' + name + '">' + opts.map(function (o) {
         return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(val) ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
@@ -733,8 +745,12 @@
       { name: 'date', label: L('evDate'), type: 'date', value: local[0], half: true },
       { name: 'time', label: L('evTime'), type: 'time', value: local[1], half: true },
       { name: 'place', label: L('evPlace'), value: ev && ev.place },
+      { name: 'users', label: L('evAssignTo'), type: 'multi', value: ev ? S.assign.filter(function (x) { return x.event_id === ev.id; }).map(function (x) { return x.user_id; }) : [],
+        options: S.members.slice().sort(function (a, b) { return a.name.localeCompare(b.name, LOCALE[lang]); }).map(function (m) { return { v: m.id, l: m.name + (m.id === S.me.id ? ' (' + L('you') + ')' : '') }; }) },
       { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : false }
     ];
+    // Änderungen optional auch für die folgenden Termine einer Serie übernehmen
+    if (ev && ev.series_id && S.events.filter(function (x) { return x.series_id === ev.series_id; }).length > 1) fields.push({ name: 'follow', label: L('evFollow'), type: 'checkbox', value: true });
     // Bestehende Serie: Wiederholungsregel als Information anzeigen
     if (ev && ev.series_id) {
       var cnt = S.events.filter(function (x) { return x.series_id === ev.series_id; }).length, r0 = ev.series_rule;
@@ -752,20 +768,44 @@
     if (!f.title || !f.date) return toast(L('evMissing'));
     var hasTime = !!f.time, tm = f.time || '00:00';
     var row = { title: f.title, place: f.place || null, starts_at: new Date(f.date + 'T' + tm).toISOString(), rsvp: !!f.rsvp, time_set: hasTime };
+    var users = f.users || [];
+    // ersetzt die Zuteilung der angegebenen Events durch die gewählten Personen
+    var setAssignees = async function (ids) {
+      if (!ids.length) return;
+      var d = await sb.from(T('event_assignees')).delete().in('event_id', ids); if (d.error) throw d.error;
+      var ar = []; ids.forEach(function (id) { users.forEach(function (u) { ar.push({ event_id: id, user_id: u }); }); });
+      if (ar.length) { var i2 = await sb.from(T('event_assignees')).insert(ar); if (i2.error) throw i2.error; }
+    };
     if (!ev && f.repeat) {
       // keine Einschränkungen: Serie läuft unbegrenzt; angelegt werden die nächsten Termine ab heute bis ein Jahr voraus
       var rule = { start: f.date, time: tm, every: Math.max(1, f.every || 1), unit: f.unit, wd: f.wd || [] };
       var occ = genOccurrences(rule.start, rule.time, rule.every, rule.unit, rule.wd, oneYear(), today());
-      if (!occ.length) return toast(L('evNoOcc'));      var sid = newSeriesId();
+      if (!occ.length) return toast(L('evNoOcc'));
+      var sid = newSeriesId();
       var rows = occ.map(function (iso) { return { title: row.title, place: row.place, rsvp: row.rsvp, time_set: hasTime, starts_at: iso, series_id: sid, series_open: true, series_rule: rule }; });
-      return act(async function () { var r = await sb.from(T('events')).insert(rows); if (r.error) throw r.error; }, L('evSeriesAdded', { n: rows.length }));
+      return act(async function () {
+        var r = await sb.from(T('events')).insert(rows).select('id'); if (r.error) throw r.error;
+        await setAssignees(r.data.map(function (x) { return x.id; }));
+      }, L('evSeriesAdded', { n: rows.length }));
     }
     return act(async function () {
-      var r = ev ? await sb.from(T('events')).update(row).eq('id', ev.id) : await sb.from(T('events')).insert(row);
-      if (r.error) throw r.error;
+      if (ev) {
+        var r = await sb.from(T('events')).update(row).eq('id', ev.id); if (r.error) throw r.error;
+        var ids = [ev.id];
+        if (f.follow && ev.series_id) {
+          var fol = S.events.filter(function (x) { return x.series_id === ev.series_id && x.id !== ev.id && new Date(x.starts_at) > new Date(ev.starts_at); }).map(function (x) { return x.id; });
+          if (fol.length) {
+            var r2 = await sb.from(T('events')).update({ title: row.title, place: row.place, rsvp: row.rsvp }).in('id', fol); if (r2.error) throw r2.error;
+            ids = ids.concat(fol);
+          }
+        }
+        await setAssignees(ids);
+      } else {
+        var r3 = await sb.from(T('events')).insert(row).select('id'); if (r3.error) throw r3.error;
+        await setAssignees(r3.data.map(function (x) { return x.id; }));
+      }
     }, L('saved'));
   }
-
   // Live-Formatierung der Nummer; +49… / 0041… wählt das Land automatisch (wie in der FBRO-App)
   document.addEventListener('input', function (e) {
     var t = e.target;
