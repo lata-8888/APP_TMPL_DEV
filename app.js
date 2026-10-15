@@ -177,8 +177,7 @@
           if (f.type === 'recurrence') {
             out.every = parseInt(form.elements.every.value, 10) || 1;
             out.unit = form.elements.unit.value;
-            out.until = form.elements.until.value;
-            out.wd = Array.prototype.map.call(form.querySelectorAll('input[name="wd"]:checked'), function (i) { return parseInt(i.value, 10); });
+            out.wd = form.elements.wd.value ? [parseInt(form.elements.wd.value, 10)] : [];
             return;
           }
           var el = form.elements[f.name];
@@ -192,8 +191,6 @@
         var refresh = function () {
           var src = form.elements[recBlock.dataset.dep];
           recBlock.hidden = !(src && src.checked);
-          var un = form.elements.until, dt = form.elements.date;
-          if (!recBlock.hidden && un && !un.value && dt && dt.value) { var q = new Date(dt.value + 'T12:00:00'); q.setMonth(q.getMonth() + 3); un.value = q.getFullYear() + '-' + String(q.getMonth() + 1).padStart(2, '0') + '-' + String(q.getDate()).padStart(2, '0'); }
           var wk = recBlock.querySelector('[data-unit]');
           if (wk) wk.hidden = form.elements.unit.value !== wk.dataset.unit;
         };
@@ -607,7 +604,7 @@
     Object.keys(bySid).forEach(function (sid) {
       var list = bySid[sid], r = list[0].series_rule;
       var last = Math.max.apply(null, list.map(function (e) { return new Date(e.starts_at).getTime(); }));
-      genOccurrences(r.start, r.time, r.every, r.unit, r.wd, oneYear()).forEach(function (iso) {
+      genOccurrences(r.start, r.time, r.every, r.unit, r.wd, oneYear(), today()).forEach(function (iso) {
         if (new Date(iso).getTime() > last) rows.push({ title: list[0].title, place: list[0].place, rsvp: list[0].rsvp, time_set: list[0].time_set, starts_at: iso, series_id: sid, series_open: true, series_rule: r });
       });
     });
@@ -616,24 +613,24 @@
     if (res.error) console.error(res.error); else await loadAll();
   }
   function recurrenceBlock() {
-    var days = [1, 2, 3, 4, 5, 6, 7].map(function (n) {
-      var nm = new Date(2024, 0, n).toLocaleDateString(LOCALE[lang], { weekday: 'short' });   // 1.1.2024 war ein Montag
-      return '<label class="wd"><input type="checkbox" name="wd" value="' + n + '"><span>' + esc(nm) + '</span></label>';
-    }).join('');
-    var units = [['day', 'evUnitDay'], ['week', 'evUnitWeek'], ['month', 'evUnitMonth'], ['year', 'evUnitYear']].map(function (u) {
-      return '<option value="' + u[0] + '"' + (u[0] === 'week' ? ' selected' : '') + '>' + esc(L(u[1])) + '</option>';
-    }).join('');
-    return '<div class="recblock" data-dep="repeat" hidden>' +
-      '<div class="grid2"><label class="fld"><span>' + esc(L('evEvery')) + '</span><input name="every" type="number" min="1" max="99" value="1"></label>' +
-      '<label class="fld"><span>' + esc(L('evUnit')) + '</span><select name="unit">' + units + '</select></label></div>' +
-      '<div class="fld" data-unit="week"><span>' + esc(L('evWeekdays')) + '</span><div class="wdrow">' + days + '</div></div>' +
-      '<label class="fld"><span>' + esc(L('evUntil')) + '</span><input name="until" type="date" max="' + oneYear() + '"></label></div>';
+    var sel = function (name, label, opts, val, extra) {
+      return '<label class="fld"' + (extra || '') + '><span>' + esc(label) + '</span><select name="' + name + '">' + opts.map(function (o) {
+        return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(val) ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+      }).join('') + '</select></label>';
+    };
+    var units = [['day', L('evUnitDay')], ['week', L('evUnitWeek')], ['month', L('evUnitMonth')], ['year', L('evUnitYear')]];
+    var nums = []; for (var k = 1; k <= 30; k++) nums.push([k, String(k)]);
+    var days = [['', L('evSameDay')]].concat([1, 2, 3, 4, 5, 6, 7].map(function (d) { return [d, new Date(2024, 0, d).toLocaleDateString(LOCALE[lang], { weekday: 'long' })]; }));   // 1.1.2024 war ein Montag
+    // eine Zeile, von links nach rechts: Einheit | Wiederholen alle | Wochentag (nur bei «Woche»)
+    return '<div class="recblock recrow" data-dep="repeat" hidden>' + sel('unit', L('evUnit'), units, 'week') + sel('every', L('evEvery'), nums, 1) +
+      sel('wd', L('evWeekdays'), days, '', ' data-unit="week"') + '</div>';
   }
-  // erzeugt die Startzeitpunkte einer Serie (lokale Zeit, höchstens 150)
-  function genOccurrences(date, time, every, unit, wd, until) {
+  // erzeugt die Startzeitpunkte einer Serie (lokale Zeit): ab «from» (Standard: Startdatum) bis «until», höchstens 400
+  function genOccurrences(date, time, every, unit, wd, until, from) {
     var out = [], max = 400, p = date.split('-').map(Number), tp = time.split(':').map(Number);
     var start = new Date(p[0], p[1] - 1, p[2]), end = new Date(until + 'T23:59:59');
-    var add = function (d) { out.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), tp[0], tp[1]).toISOString()); };
+    var lo = from && new Date(from + 'T00:00:00') > start ? new Date(from + 'T00:00:00') : start;
+    var add = function (d) { if (d >= lo && out.length < max) out.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), tp[0], tp[1]).toISOString()); };
     var k, d;
     if (unit === 'day') {
       for (d = new Date(start); d <= end && out.length < max; d.setDate(d.getDate() + every)) add(d);
@@ -643,7 +640,7 @@
       for (var w = new Date(monday); w <= end && out.length < max; w.setDate(w.getDate() + 7 * every)) {
         days.forEach(function (n) {
           var x = new Date(w); x.setDate(w.getDate() + (n - 1));
-          if (x >= start && x <= end && out.length < max) add(x);
+          if (x >= start && x <= end) add(x);
         });
       }
     } else if (unit === 'month') {
@@ -661,8 +658,7 @@
       }
     }
     return out;
-  }
-  function newSeriesId() {
+  }  function newSeriesId() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
   }
@@ -703,14 +699,11 @@
     var hasTime = !!f.time, tm = f.time || '00:00';
     var row = { title: f.title, place: f.place || null, starts_at: new Date(f.date + 'T' + tm).toISOString(), rsvp: !!f.rsvp, time_set: hasTime };
     if (!ev && f.repeat) {
-      var maxD = new Date(); maxD.setFullYear(maxD.getFullYear() + 1);
-      var maxIso = isoDate(maxD), open = !f.until;
-      if (open || f.until > maxIso) f.until = maxIso;
+      // keine Einschränkungen: Serie läuft unbegrenzt; angelegt werden die nächsten Termine ab heute bis ein Jahr voraus
       var rule = { start: f.date, time: tm, every: Math.max(1, f.every || 1), unit: f.unit, wd: f.wd || [] };
-      var occ = genOccurrences(rule.start, rule.time, rule.every, rule.unit, rule.wd, f.until);
-      if (!occ.length) return toast(L('evNoOcc'));
-      var sid = newSeriesId();
-      var rows = occ.map(function (iso) { return { title: row.title, place: row.place, rsvp: row.rsvp, time_set: hasTime, starts_at: iso, series_id: sid, series_open: open, series_rule: open ? rule : null }; });
+      var occ = genOccurrences(rule.start, rule.time, rule.every, rule.unit, rule.wd, oneYear(), today());
+      if (!occ.length) return toast(L('evNoOcc'));      var sid = newSeriesId();
+      var rows = occ.map(function (iso) { return { title: row.title, place: row.place, rsvp: row.rsvp, time_set: hasTime, starts_at: iso, series_id: sid, series_open: true, series_rule: rule }; });
       return act(async function () { var r = await sb.from(T('events')).insert(rows); if (r.error) throw r.error; }, L('evSeriesAdded', { n: rows.length }));
     }
     return act(async function () {
