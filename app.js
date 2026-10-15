@@ -414,11 +414,14 @@
     var fromMe = sort(S.tasks.filter(function (t) { return t.created_by === S.me.id && t.assigned_to !== S.me.id; }));
     var other = sort(S.tasks.filter(function (t) { return t.assigned_to !== S.me.id && t.created_by !== S.me.id; }));
     var list = function (a) { return a.length ? '<ul class="list">' + a.map(taskRow).join('') + '</ul>' : '<p class="muted">' + esc(L('taskEmpty')) + '</p>'; };
-    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navTasks')) + '</h1><p>' + esc(L('tasksSub')) + '</p></div>' +
+    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navTasks')) + '</h1></div>' +
       '<button type="button" class="hico addbtn" data-act="task-new" aria-label="' + esc(L('taskNew')) + '" title="' + esc(L('taskNew')) + '">' + ICON.plus + '</button></div>';
-    html += accordion('t-me', L('taskSecMine'), open(forMe).length, list(forMe));
-    html += accordion('t-from', L('taskSecFrom'), open(fromMe).length, list(fromMe));
-    if (isAdmin() && other.length) html += accordion('t-other', L('taskSecOther'), open(other).length, list(other));
+    // Register (Tabs) statt Abschnitte, wie im Einkauf
+    var showOther = isAdmin() && other.length > 0;
+    var tv = S.taskView === 'from' || (S.taskView === 'other' && showOther) ? S.taskView : 'me';
+    var tab = function (v, label, n) { var on = v === tv; return '<button type="button" role="tab" class="subtab' + (on ? ' on' : '') + '" aria-selected="' + on + '" data-act="task-view" data-val="' + v + '">' + esc(label) + (n ? ' (' + n + ')' : '') + '</button>'; };
+    html += '<div class="subtabs" role="tablist">' + tab('me', L('taskSecMine'), open(forMe).length) + tab('from', L('taskSecFrom'), open(fromMe).length) + (showOther ? tab('other', L('taskSecOther'), open(other).length) : '') + '</div>';
+    html += list(tv === 'from' ? fromMe : tv === 'other' ? other : forMe);
     return html;
   }
   async function taskForm(t) {
@@ -720,6 +723,7 @@
     switch (a) {
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
+      case 'task-view': S.taskView = v; return render();
       case 'who': S.open['ev:' + id] = !S.open['ev:' + id]; return render();
       case 'task-new': return taskForm(null);
       case 'task-edit': return taskForm(S.tasks.filter(function (x) { return x.id === id; })[0]);
