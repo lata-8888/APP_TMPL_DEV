@@ -46,10 +46,10 @@
 
   /* ---------- Design (vom Admin für alle gewählt; in app_settings gespeichert, lokal zwischengespeichert) ---------- */
   var DESIGNS = [
+    { id: 'light', colors: ['#4A5568', '#EDEFF2', '#FBFBFC'] },
     { id: 'standard', colors: ['#307CC0', '#E3EFF9', '#F3F4F0'] },
-    { id: 'holland', colors: ['#EA580C', '#F97316', '#FFF7ED'] },
-    { id: 'light', colors: ['#111827', '#E5E7EB', '#FFFFFF'] },
-    { id: 'petrol', colors: ['#0E5F6F', '#2BAFC4', '#EAF4F6'] }
+    { id: 'petrol', colors: ['#0E5F6F', '#2BAFC4', '#EAF4F6'] },
+    { id: 'holland', colors: ['#EA580C', '#F97316', '#FFF7ED'] }
   ];
   var design = 'standard';        // wirksames Design (eigene Wahl, sonst Standard des Admins)
   var adminDesign = 'standard';   // Standard-Design der App (vom Admin)
