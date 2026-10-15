@@ -144,7 +144,7 @@
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3200);
   }
   // Bottom-Sheet mit Formular → Promise(Werte | null)
-  function askForm(title, fields, okLabel, intro) {
+  function askForm(title, fields, okLabel, intro, extra) {
     return new Promise(function (resolve) {
       var wrap = document.createElement('div'); wrap.className = 'ccsheet-bg';
       wrap.innerHTML = '<form class="ccsheet" role="dialog" aria-modal="true" aria-label="' + esc(title) + '"><h3>' + esc(title) + '</h3>' +
@@ -164,10 +164,10 @@
           if (f.half && !(next && next.half)) html += '</div>';
           return html;
         }).join('') +
-        '<div class="row"><button type="button" class="btn ghost" data-x="cancel">' + esc(L('cancel')) + '</button><button class="btn" type="submit">' + esc(okLabel || L('save')) + '</button></div></form>';
+        (extra ? '<button type="button" class="btn danger" data-x="extra">' + esc(extra) + '</button>' : '') + '<div class="row"><button type="button" class="btn ghost" data-x="cancel">' + esc(L('cancel')) + '</button><button class="btn" type="submit">' + esc(okLabel || L('save')) + '</button></div></form>';
       document.body.appendChild(wrap);
       var form = wrap.querySelector('form'), close = function (v) { wrap.remove(); resolve(v); };
-      wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.dataset.x === 'cancel') close(null); });
+      wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.dataset.x === 'cancel') close(null); else if (e.target.dataset.x === 'extra') close({ __extra: true }); });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var out = {};
@@ -190,6 +190,8 @@
         var refresh = function () {
           var src = form.elements[recBlock.dataset.dep];
           recBlock.hidden = !(src && src.checked);
+          var un = form.elements.until, dt = form.elements.date;
+          if (!recBlock.hidden && un && !un.value && dt && dt.value) { var q = new Date(dt.value + 'T12:00:00'); q.setMonth(q.getMonth() + 3); un.value = q.getFullYear() + '-' + String(q.getMonth() + 1).padStart(2, '0') + '-' + String(q.getDate()).padStart(2, '0'); }
           var wk = recBlock.querySelector('[data-unit]');
           if (wk) wk.hidden = form.elements.unit.value !== wk.dataset.unit;
         };
@@ -635,6 +637,22 @@
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
   }
 
+  async function deleteEvent(ev) {
+    if (!canManageEvents() || !ev) return;
+    var inSeries = ev.series_id && S.events.filter(function (x) { return x.series_id === ev.series_id; }).length > 1;
+    var scope = 'one';
+    if (inSeries) {
+      var sf = await askForm(L('del'), [{ name: 'scope', label: L('evDelScope'), type: 'select', value: 'one', options: [
+        { v: 'one', l: L('evDelOne') }, { v: 'future', l: L('evDelFuture') }, { v: 'all', l: L('evDelAll') }] }], L('del'), L('evDeleteAsk', { name: ev.title }));
+      if (!sf) return;
+      scope = sf.scope;
+    } else if (!(await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))) return;
+    return act(async function () {
+      var q = sb.from(T('events')).delete();
+      q = scope === 'one' ? q.eq('id', ev.id) : scope === 'future' ? q.eq('series_id', ev.series_id).gte('starts_at', ev.starts_at) : q.eq('series_id', ev.series_id);
+      var r = await q; if (r.error) throw r.error;
+    }, L('removed'));
+  }
   async function eventForm(ev) {
     // Wie in der FBRO-App: Titel, Datum und Uhrzeit getrennt (Datum | Zeit nebeneinander), Ort
     var local = ev ? toLocalInput(ev.starts_at).split('T') : ['', '18:00'];
@@ -643,12 +661,13 @@
       { name: 'date', label: L('evDate'), type: 'date', value: local[0], half: true },
       { name: 'time', label: L('evTime'), type: 'time', value: local[1], half: true },
       { name: 'place', label: L('evPlace'), value: ev && ev.place },
-      { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : true }
+      { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : false }
     ];
     // Wiederholung nur beim Anlegen eines neuen Events
     if (!ev) { fields.push({ name: 'repeat', label: L('evRepeat'), type: 'checkbox', value: false }); fields.push({ name: 'rec', type: 'recurrence' }); }
-    var f = await askForm(ev ? L('evEdit') : L('evNew'), fields);
+    var f = await askForm(ev ? L('evEdit') : L('evNew'), fields, null, null, ev ? L('del') : null);
     if (!f) return;
+    if (f.__extra) return deleteEvent(ev);
     if (!f.title || !f.date || !f.time || !f.place) return toast(L('evMissing'));
     var row = { title: f.title, place: f.place, starts_at: new Date(f.date + 'T' + f.time).toISOString(), rsvp: !!f.rsvp };
     if (!ev && f.repeat) {
@@ -744,22 +763,8 @@
       }
       case 'ev-new': return eventForm(null);
       case 'ev-edit': return eventForm(ev);
-      case 'ev-del': {
-        if (!canManageEvents() || !ev) return;
-        var inSeries = ev.series_id && S.events.filter(function (x) { return x.series_id === ev.series_id; }).length > 1;
-        var scope = 'one';
-        if (inSeries) {
-          var sf = await askForm(L('del'), [{ name: 'scope', label: L('evDelScope'), type: 'select', value: 'one', options: [
-            { v: 'one', l: L('evDelOne') }, { v: 'future', l: L('evDelFuture') }, { v: 'all', l: L('evDelAll') }] }], L('del'), L('evDeleteAsk', { name: ev.title }));
-          if (!sf) return;
-          scope = sf.scope;
-        } else if (!(await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))) return;
-        return act(async function () {
-          var q = sb.from(T('events')).delete();
-          q = scope === 'one' ? q.eq('id', id) : scope === 'future' ? q.eq('series_id', ev.series_id).gte('starts_at', ev.starts_at) : q.eq('series_id', ev.series_id);
-          var r = await q; if (r.error) throw r.error;
-        }, L('removed'));
-      }      case 'admin': return rpc('set_admin', { target: id, make_admin: v === 'true' }, L('saved'));
+      case 'ev-del': return deleteEvent(ev);
+      case 'admin': return rpc('set_admin', { target: id, make_admin: v === 'true' }, L('saved'));
       case 'reset-pin':
         if (await askConfirm(L('resetPin'), L('resetPinAsk', { name: member.name }))) return rpc('reset_pin', { target: id }, L('pinReset'));
         return;
