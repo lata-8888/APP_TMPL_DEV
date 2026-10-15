@@ -159,6 +159,7 @@
           var html;
           if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
           else if (f.type === 'recurrence') html = recurrenceBlock();
+          else if (f.type === 'textarea') html = '<label class="fld"><span>' + esc(f.label) + '</span><textarea name="' + f.name + '" rows="3">' + esc(f.value || '') + '</textarea></label>';
           else if (f.type === 'multi') html = '<div class="fld"><span>' + esc(f.label) + '</span><div class="chklist">' + f.options.map(function (o) {
             return '<label class="check"><input type="checkbox" name="' + f.name + '" value="' + esc(o.v) + '"' + ((f.value || []).indexOf(o.v) > -1 ? ' checked' : '') + '><span>' + esc(o.l) + '</span></label>';
           }).join('') + '</div></div>';
@@ -351,8 +352,9 @@
     var btn = function (v, cls, label) { return '<button type="button" class="resp ' + cls + '" data-act="answer" data-id="' + e.id + '" data-val="' + v + '" aria-pressed="' + !!(mine && mine.answer === v) + '">' + esc(label) + '</button>'; };
     var info = !!S.open['evc:' + e.id];
     var asg = S.assign.filter(function (x) { return x.event_id === e.id; });   // Zeit und Ort: standardmässig eingeklappt
-    var infoHtml = info ? '<p class="muted small">' + esc(e.time_set === false ? L('evNoTime') : fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' + (asg.length ? '<div class="who"><div><h4>' + esc(L('evAssigned', { n: asg.length })) + '</h4><div class="chips">' + pills(asg) + '</div></div></div>' : '') : '';
-    // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
+    var infoHtml = info ? '<div class="evline"><span class="muted small">' + esc(e.time_set === false ? L('evNoTime') : fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</span>' +
+      (asg.length ? '<span class="chips">' + pills(asg) + '</span>' : '') + '</div>' +
+      (e.comment ? '<p class="evcomment">' + esc(e.comment) + '</p>' : '') : '';    // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
     var rsvpHtml = e.rsvp === false ? '' :
       '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
       '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
@@ -658,7 +660,7 @@
       var sid = sids[si], list = bySid[sid].sort(function (x, y) { return new Date(x.starts_at) - new Date(y.starts_at); });
       var lastEv = list[list.length - 1], r = lastEv.series_rule, last = new Date(lastEv.starts_at).getTime(), rows = [];
       genOccurrences(r.start, r.time, r.every, r.unit, r.wd, oneYear(), today()).forEach(function (iso) {
-        if (new Date(iso).getTime() > last) rows.push({ title: lastEv.title, place: lastEv.place, rsvp: lastEv.rsvp, time_set: lastEv.time_set, starts_at: iso, series_id: sid, series_open: true, series_rule: r });
+        if (new Date(iso).getTime() > last) rows.push({ title: lastEv.title, place: lastEv.place, comment: lastEv.comment || null, rsvp: lastEv.rsvp, time_set: lastEv.time_set, starts_at: iso, series_id: sid, series_open: true, series_rule: r });
       });
       if (!rows.length) continue;
       var res = await sb.from(T('events')).insert(rows).select('id');
@@ -745,6 +747,7 @@
       { name: 'date', label: L('evDate'), type: 'date', value: local[0], half: true },
       { name: 'time', label: L('evTime'), type: 'time', value: local[1], half: true },
       { name: 'place', label: L('evPlace'), value: ev && ev.place },
+      { name: 'comment', label: L('evComment'), type: 'textarea', value: ev && ev.comment },
       { name: 'users', label: L('evAssignTo'), type: 'multi', value: ev ? S.assign.filter(function (x) { return x.event_id === ev.id; }).map(function (x) { return x.user_id; }) : [],
         options: S.members.slice().sort(function (a, b) { return a.name.localeCompare(b.name, LOCALE[lang]); }).map(function (m) { return { v: m.id, l: m.name + (m.id === S.me.id ? ' (' + L('you') + ')' : '') }; }) },
       { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : false }
@@ -767,7 +770,7 @@
     if (f.__extra) return deleteEvent(ev);
     if (!f.title || !f.date) return toast(L('evMissing'));
     var hasTime = !!f.time, tm = f.time || '00:00';
-    var row = { title: f.title, place: f.place || null, starts_at: new Date(f.date + 'T' + tm).toISOString(), rsvp: !!f.rsvp, time_set: hasTime };
+    var row = { title: f.title, place: f.place || null, comment: f.comment || null, starts_at: new Date(f.date + 'T' + tm).toISOString(), rsvp: !!f.rsvp, time_set: hasTime };
     var users = f.users || [];
     // ersetzt die Zuteilung der angegebenen Events durch die gewählten Personen
     var setAssignees = async function (ids) {
@@ -782,7 +785,7 @@
       var occ = genOccurrences(rule.start, rule.time, rule.every, rule.unit, rule.wd, oneYear(), today());
       if (!occ.length) return toast(L('evNoOcc'));
       var sid = newSeriesId();
-      var rows = occ.map(function (iso) { return { title: row.title, place: row.place, rsvp: row.rsvp, time_set: hasTime, starts_at: iso, series_id: sid, series_open: true, series_rule: rule }; });
+      var rows = occ.map(function (iso) { return { title: row.title, place: row.place, comment: row.comment, rsvp: row.rsvp, time_set: hasTime, starts_at: iso, series_id: sid, series_open: true, series_rule: rule }; });
       return act(async function () {
         var r = await sb.from(T('events')).insert(rows).select('id'); if (r.error) throw r.error;
         await setAssignees(r.data.map(function (x) { return x.id; }));
@@ -795,7 +798,7 @@
         if (f.follow && ev.series_id) {
           var fol = S.events.filter(function (x) { return x.series_id === ev.series_id && x.id !== ev.id && new Date(x.starts_at) > new Date(ev.starts_at); }).map(function (x) { return x.id; });
           if (fol.length) {
-            var r2 = await sb.from(T('events')).update({ title: row.title, place: row.place, rsvp: row.rsvp }).in('id', fol); if (r2.error) throw r2.error;
+            var r2 = await sb.from(T('events')).update({ title: row.title, place: row.place, comment: row.comment, rsvp: row.rsvp }).in('id', fol); if (r2.error) throw r2.error;
             ids = ids.concat(fol);
           }
         }

@@ -232,3 +232,13 @@ p{margin:0}
 .cceh .hico + .accfold{margin-left:0}
 .chklist{display:grid;gap:2px;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:var(--r-btn,10px);padding:6px 10px;background:var(--surface)}
 .chklist .check{margin:0}
+
+/* Agenda: Zeile mit Zeit, Ort und Personen; Kommentar; deutlichere Event-Tage im Kalender */
+.evline{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.evline .chips{display:inline-flex;flex-wrap:wrap;gap:4px;margin:0}
+.evcomment{margin:6px 0 0;font-size:.92rem;white-space:pre-wrap;color:var(--ink)}
+textarea[name]{width:100%;font-family:inherit;font-size:1rem;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--r-btn,10px);background:var(--surface);color:var(--ink);resize:vertical}
+.calday.has{background:color-mix(in srgb,var(--crown) 20%,var(--surface));border:2px solid var(--crown);font-weight:700}
+.calday.has .dn{font-weight:700}
+.calday.has svg{width:18px;height:18px;stroke-width:2.4}
+.calday.has.sel{background:var(--crown)}
