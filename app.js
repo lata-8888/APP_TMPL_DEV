@@ -523,7 +523,7 @@
 
   function viewAdmin() {
     // Aufbau wie in der FBRO-App: Titelzeile, Abschnitte als Akkordeon mit «+», Zeilen mit «Bearbeiten/Löschen» bzw. «…»-Menü
-    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navAdmin')) + '</h1><p>' + esc(L('adminSub')) + '</p></div></div>';
+    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navAdmin')) + '</h1></div></div>';
     // Chronologisch: frühestes Event zuerst
     var evs = S.events.slice().sort(function (a, b) { return new Date(a.starts_at) - new Date(b.starts_at); });
     var evBody = evs.length ? '<ul class="list">' + evs.map(function (e) {
@@ -798,13 +798,23 @@
         var r = await sb.from(T('events')).update(row).eq('id', ev.id); if (r.error) throw r.error;
         var ids = [ev.id];
         if (f.follow && ev.series_id) {
-          var fol = S.events.filter(function (x) { return x.series_id === ev.series_id && x.id !== ev.id && new Date(x.starts_at) > new Date(ev.starts_at); }).map(function (x) { return x.id; });
-          if (fol.length) {
-            var r2 = await sb.from(T('events')).update({ title: row.title, place: row.place, comment: row.comment, rsvp: row.rsvp }).in('id', fol); if (r2.error) throw r2.error;
-            ids = ids.concat(fol);
+          // Tagesverschiebung des bearbeiteten Termins auch auf die folgenden anwenden; Uhrzeit, Titel, Ort etc. übernehmen
+          var dayDelta = Math.round((new Date(f.date + 'T00:00') - new Date(isoDate(new Date(ev.starts_at)) + 'T00:00')) / 86400000);
+          var fol = S.events.filter(function (x) { return x.series_id === ev.series_id && x.id !== ev.id && new Date(x.starts_at) > new Date(ev.starts_at); });
+          var ups = await Promise.all(fol.map(function (x) {
+            var nd = new Date(x.starts_at); nd.setDate(nd.getDate() + dayDelta);
+            return sb.from(T('events')).update({ title: row.title, place: row.place, comment: row.comment, rsvp: row.rsvp, time_set: hasTime, starts_at: new Date(isoDate(nd) + 'T' + tm).toISOString() }).eq('id', x.id);
+          }));
+          ups.forEach(function (u) { if (u.error) throw u.error; });
+          ids = ids.concat(fol.map(function (x) { return x.id; }));
+          // Regel der Serie anpassen, damit die automatische Verlängerung dazu passt
+          if (ev.series_rule) {
+            var rl = Object.assign({}, ev.series_rule), st = new Date(rl.start + 'T12:00:00'); st.setDate(st.getDate() + dayDelta);
+            rl.start = isoDate(st); rl.time = tm;
+            rl.wd = (rl.wd || []).map(function (w) { return ((w - 1 + dayDelta) % 7 + 7) % 7 + 1; });
+            var ru = await sb.from(T('events')).update({ series_rule: rl }).eq('series_id', ev.series_id); if (ru.error) throw ru.error;
           }
-        }
-        await setAssignees(ids);
+        }        await setAssignees(ids);
       } else {
         var r3 = await sb.from(T('events')).insert(row).select('id'); if (r3.error) throw r3.error;
         await setAssignees(r3.data.map(function (x) { return x.id; }));
