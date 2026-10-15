@@ -335,7 +335,7 @@
       }).join('') : '<span class="small muted">' + esc(L('evNobody')) + '</span>';
     };
     var btn = function (v, cls, label) { return '<button type="button" class="resp ' + cls + '" data-act="answer" data-id="' + e.id + '" data-val="' + v + '" aria-pressed="' + !!(mine && mine.answer === v) + '">' + esc(label) + '</button>'; };
-    return '<article class="ccel"><div class="cceh"><b>' + esc(fmtDay(e.starts_at)) + ' – ' + esc(e.title) + '</b>' +
+    return '<article class="ccel"><div class="cceh"><b>' + esc(fmtDay(e.starts_at)) + ' – ' + esc(e.title) + (e.series_id ? ' <span class="small muted" title="' + esc(L('evRepeat')) + '">&#8635;</span>' : '') + '</b>' +
       (canManageEvents() ? '<button type="button" class="hico" data-act="ev-edit" data-id="' + e.id + '" aria-label="' + esc(L('edit')) + '" title="' + esc(L('edit')) + '">' + ICON.dots + '</button>' : '') + '</div>' +
       '<div class="ccbody"><p class="muted small">' + esc(fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' +
       // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
@@ -368,7 +368,8 @@
   }
   function viewEvents() {
     var limit = Date.now() - 3 * 3600e3;
-    var up = S.events.filter(function (e) { return new Date(e.starts_at).getTime() >= limit; });
+    var yc = new Date(); yc.setFullYear(yc.getFullYear() + 1); var yearCut = yc.getTime();   // Agenda zeigt höchstens ein Jahr voraus
+    var up = S.events.filter(function (e) { var t = new Date(e.starts_at).getTime(); return t >= limit && t < yearCut; });
     var past = S.events.filter(function (e) { return new Date(e.starts_at).getTime() < limit; }).reverse();
     var hz = evHorizon(), cut = null;
     if (hz > 0) { var c = new Date(); c.setMonth(c.getMonth() + hz); cut = c.getTime(); }
@@ -588,6 +589,7 @@
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; if (S.step === 'app') render(); });
 
   // Wiederholung wie in Outlook: «Wiederholen alle [n] [Tag|Woche|Monat|Jahr]», Wochentage, «Bis»
+  function oneYear() { var d = new Date(); d.setFullYear(d.getFullYear() + 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function recurrenceBlock() {
     var days = [1, 2, 3, 4, 5, 6, 7].map(function (n) {
       var nm = new Date(2024, 0, n).toLocaleDateString(LOCALE[lang], { weekday: 'short' });   // 1.1.2024 war ein Montag
@@ -600,7 +602,7 @@
       '<div class="grid2"><label class="fld"><span>' + esc(L('evEvery')) + '</span><input name="every" type="number" min="1" max="99" value="1"></label>' +
       '<label class="fld"><span>' + esc(L('evUnit')) + '</span><select name="unit">' + units + '</select></label></div>' +
       '<div class="fld" data-unit="week"><span>' + esc(L('evWeekdays')) + '</span><div class="wdrow">' + days + '</div></div>' +
-      '<label class="fld"><span>' + esc(L('evUntil')) + '</span><input name="until" type="date"></label></div>';
+      '<label class="fld"><span>' + esc(L('evUntil')) + '</span><input name="until" type="date" max="' + oneYear() + '"></label></div>';
   }
   // erzeugt die Startzeitpunkte einer Serie (lokale Zeit, höchstens 150)
   function genOccurrences(date, time, every, unit, wd, until) {
@@ -675,6 +677,9 @@
     var row = { title: f.title, place: f.place, starts_at: new Date(f.date + 'T' + f.time).toISOString(), rsvp: !!f.rsvp };
     if (!ev && f.repeat) {
       if (!f.until) return toast(L('evUntilMissing'));
+      var maxD = new Date(); maxD.setFullYear(maxD.getFullYear() + 1);
+      var maxIso = maxD.getFullYear() + '-' + String(maxD.getMonth() + 1).padStart(2, '0') + '-' + String(maxD.getDate()).padStart(2, '0');
+      if (f.until > maxIso) f.until = maxIso;
       var occ = genOccurrences(f.date, f.time, Math.max(1, f.every || 1), f.unit, f.wd, f.until);
       if (!occ.length) return toast(L('evNoOcc'));
       var sid = newSeriesId();
