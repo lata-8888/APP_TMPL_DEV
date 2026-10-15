@@ -128,6 +128,9 @@
 
   /* ---------- Zustand ---------- */
   var S = { step: 'login', err: '', busy: false, session: null, me: null, members: [], events: [], resp: [], tasks: [], tab: 'events', sec: {}, open: {}, phone: '' };
+  // Admin: alle Teilbereiche sind beim Öffnen eingeklappt
+  var ADMIN_KEYS = ['events', 'members', 'recur', 'design', 'lang', 'a-tasks', 'g-user', 'g-guest'];
+  ADMIN_KEYS.forEach(function (k) { S.sec[k] = false; });
   var installEvt = null;
   var isAdmin = function () { return !!(S.me && S.me.is_admin); };
   var canManageEvents = function () { return !!(S.me && (S.me.is_admin || S.me.is_event_manager)); };   // Admin oder Event Manager
@@ -155,6 +158,7 @@
           var html;
           if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
           else if (f.type === 'recurrence') html = recurrenceBlock();
+          else if (f.type === 'note') html = '<p class="muted small recinfo">' + esc(f.text) + '</p>';
           else if (f.type === 'phone') html = '<div class="fld"><span>' + esc(f.label) + '</span>' + phoneField(f.value) + '</div>';
           else if (f.type === 'select') html = '<label class="fld"><span>' + esc(f.label) + '</span><select name="' + f.name + '">' + f.options.map(function (o) {
             return '<option value="' + esc(o.v) + '"' + (o.v === f.value ? ' selected' : '') + '>' + esc(o.l) + '</option>';
@@ -174,6 +178,7 @@
         e.preventDefault();
         var out = {};
         fields.forEach(function (f) {
+          if (f.type === 'note') return;
           if (f.type === 'recurrence') {
             out.every = parseInt(form.elements.every.value, 10) || 1;
             out.unit = form.elements.unit.value;
@@ -510,7 +515,7 @@
     // Chronologisch: frühestes Event zuerst
     var evs = S.events.slice().sort(function (a, b) { return new Date(a.starts_at) - new Date(b.starts_at); });
     var evBody = evs.length ? '<ul class="list">' + evs.map(function (e) {
-      return '<li><div class="l"><b>' + esc(e.title) + '</b><span>' + esc(fmtDate(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</span></div>' +
+      return '<li><div class="l"><b>' + esc(e.title) + (e.series_id ? ' <span class="small muted">&#8635;</span>' : '') + '</b><span>' + esc(e.time_set === false ? fmtDay(e.starts_at) : fmtDate(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</span></div>' +
         '<div class="btnrow"><button type="button" class="mini" data-act="ev-edit" data-id="' + e.id + '">' + esc(L('edit')) + '</button>' +
         '<button type="button" class="mini del" data-act="ev-del" data-id="' + e.id + '">' + esc(L('del')) + '</button></div></li>';
     }).join('') + '</ul>' : '<p class="muted">' + esc(L('evAdminEmpty')) + '</p>';
@@ -535,6 +540,9 @@
     var users = S.members.filter(function (m) { return !m.is_guest; }), guests = S.members.filter(function (m) { return m.is_guest; });
     var mbBody = group('g-user', L('grpUsers'), users, ICON.user) + group('g-guest', L('grpGuests'), guests, ICON.guest);
     html += accordion('members', L('secMembers'), S.members.length, mbBody, 'add-user', L('addUser'));
+    // Alle Tasks (Admin): bearbeiten, erledigen, löschen
+    var allT = S.tasks.slice().sort(function (x, y) { return (x.done - y.done) || x.due_date.localeCompare(y.due_date); });
+    html += accordion('a-tasks', L('adminTasks'), allT.length, (allT.length ? '<ul class="list">' + allT.map(taskRow).join('') + '</ul>' : '<p class="muted">' + esc(L('taskEmpty')) + '</p>'), 'task-new', L('taskNew'));
     // Design der ganzen App (nur Admins)
     var dsg = DESIGNS.map(function (d) {
       var on = d.id === adminDesign;
@@ -727,6 +735,15 @@
       { name: 'place', label: L('evPlace'), value: ev && ev.place },
       { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : false }
     ];
+    // Bestehende Serie: Wiederholungsregel als Information anzeigen
+    if (ev && ev.series_id) {
+      var cnt = S.events.filter(function (x) { return x.series_id === ev.series_id; }).length, r0 = ev.series_rule;
+      var unitKey = r0 ? { day: 'evUnitDay', week: 'evUnitWeek', month: 'evUnitMonth', year: 'evUnitYear' }[r0.unit] : '';
+      var dayTxt = r0 && r0.unit === 'week' ? ', ' + new Date(2024, 0, (r0.wd && r0.wd.length ? r0.wd[0] : ((new Date(r0.start + 'T12:00:00').getDay() + 6) % 7) + 1)).toLocaleDateString(LOCALE[lang], { weekday: 'long' }) : '';
+      fields.push({ type: 'note', text: r0 && unitKey
+        ? L('evSeriesInfo', { n: r0.every, unit: L(unitKey), day: dayTxt, count: cnt }) + (ev.series_open ? ' · ' + L('evSeriesOpen') : '')
+        : L('evSeriesPlain', { count: cnt }) });
+    }
     // Wiederholung nur beim Anlegen eines neuen Events
     if (!ev) { fields.push({ name: 'repeat', label: L('evRepeat'), type: 'checkbox', value: false }); fields.push({ name: 'rec', type: 'recurrence' }); }
     var f = await askForm(ev ? L('evEdit') : L('evNew'), fields, null, null, ev ? L('del') : null);
@@ -783,7 +800,7 @@
     var ev = S.events.filter(function (x) { return x.id === id; })[0];
     var rpc = function (fn, args, msg) { return act(async function () { var r = await sb.rpc(fn, args); if (r.error) throw r.error; }, msg); };
     switch (a) {
-      case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
+      case 'goto': if (v === 'admin') ADMIN_KEYS.forEach(function (k) { S.sec[k] = false; }); S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
       case 'ev-view': S.evView = v; return render();
       case 'ev-card': S.open['evc:' + id] = !S.open['evc:' + id]; return render();
