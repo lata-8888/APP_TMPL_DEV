@@ -152,6 +152,7 @@
         fields.map(function (f, i) {
           var html;
           if (f.type === 'checkbox') html = '<label class="check"><input type="checkbox" name="' + f.name + '"' + (f.value ? ' checked' : '') + '><span>' + esc(f.label) + '</span></label>';
+          else if (f.type === 'recurrence') html = recurrenceBlock();
           else if (f.type === 'phone') html = '<div class="fld"><span>' + esc(f.label) + '</span>' + phoneField(f.value) + '</div>';
           else if (f.type === 'select') html = '<label class="fld"><span>' + esc(f.label) + '</span><select name="' + f.name + '">' + f.options.map(function (o) {
             return '<option value="' + esc(o.v) + '"' + (o.v === f.value ? ' selected' : '') + '>' + esc(o.l) + '</option>';
@@ -169,9 +170,31 @@
       wrap.addEventListener('click', function (e) { if (e.target === wrap || e.target.dataset.x === 'cancel') close(null); });
       form.addEventListener('submit', function (e) {
         e.preventDefault();
-        var out = {}; fields.forEach(function (f) { var el = form.elements[f.name]; out[f.name] = f.type === 'checkbox' ? el.checked : f.type === 'phone' ? composePhone(form.elements.phonecc ? form.elements.phonecc.value : '', el.value) : el.value.trim(); });
+        var out = {};
+        fields.forEach(function (f) {
+          if (f.type === 'recurrence') {
+            out.every = parseInt(form.elements.every.value, 10) || 1;
+            out.unit = form.elements.unit.value;
+            out.until = form.elements.until.value;
+            out.wd = Array.prototype.map.call(form.querySelectorAll('input[name="wd"]:checked'), function (i) { return parseInt(i.value, 10); });
+            return;
+          }
+          var el = form.elements[f.name];
+          out[f.name] = f.type === 'checkbox' ? el.checked : f.type === 'phone' ? composePhone(form.elements.phonecc ? form.elements.phonecc.value : '', el.value) : el.value.trim();
+        });
         close(out);
       });
+      // Wiederholungs-Block nur zeigen, wenn «Wiederkehrend» angehakt ist; Wochentage nur bei «Woche»
+      var recBlock = form.querySelector('[data-dep]');
+      if (recBlock) {
+        var refresh = function () {
+          var src = form.elements[recBlock.dataset.dep];
+          recBlock.hidden = !(src && src.checked);
+          var wk = recBlock.querySelector('[data-unit]');
+          if (wk) wk.hidden = form.elements.unit.value !== wk.dataset.unit;
+        };
+        form.addEventListener('change', refresh); refresh();
+      }
       var first = form.querySelector('input'); if (first) first.focus();
     });
   }
@@ -559,21 +582,85 @@
 
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; if (S.step === 'app') render(); });
 
+  // Wiederholung wie in Outlook: «Wiederholen alle [n] [Tag|Woche|Monat|Jahr]», Wochentage, «Bis»
+  function recurrenceBlock() {
+    var days = [1, 2, 3, 4, 5, 6, 7].map(function (n) {
+      var nm = new Date(2024, 0, n).toLocaleDateString(LOCALE[lang], { weekday: 'short' });   // 1.1.2024 war ein Montag
+      return '<label class="wd"><input type="checkbox" name="wd" value="' + n + '"><span>' + esc(nm) + '</span></label>';
+    }).join('');
+    var units = [['day', 'evUnitDay'], ['week', 'evUnitWeek'], ['month', 'evUnitMonth'], ['year', 'evUnitYear']].map(function (u) {
+      return '<option value="' + u[0] + '"' + (u[0] === 'week' ? ' selected' : '') + '>' + esc(L(u[1])) + '</option>';
+    }).join('');
+    return '<div class="recblock" data-dep="repeat" hidden>' +
+      '<div class="grid2"><label class="fld"><span>' + esc(L('evEvery')) + '</span><input name="every" type="number" min="1" max="99" value="1"></label>' +
+      '<label class="fld"><span>' + esc(L('evUnit')) + '</span><select name="unit">' + units + '</select></label></div>' +
+      '<div class="fld" data-unit="week"><span>' + esc(L('evWeekdays')) + '</span><div class="wdrow">' + days + '</div></div>' +
+      '<label class="fld"><span>' + esc(L('evUntil')) + '</span><input name="until" type="date"></label></div>';
+  }
+  // erzeugt die Startzeitpunkte einer Serie (lokale Zeit, höchstens 150)
+  function genOccurrences(date, time, every, unit, wd, until) {
+    var out = [], max = 150, p = date.split('-').map(Number), tp = time.split(':').map(Number);
+    var start = new Date(p[0], p[1] - 1, p[2]), end = new Date(until + 'T23:59:59');
+    var add = function (d) { out.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), tp[0], tp[1]).toISOString()); };
+    var k, d;
+    if (unit === 'day') {
+      for (d = new Date(start); d <= end && out.length < max; d.setDate(d.getDate() + every)) add(d);
+    } else if (unit === 'week') {
+      var days = (wd && wd.length ? wd : [((start.getDay() + 6) % 7) + 1]).slice().sort();
+      var monday = new Date(start); monday.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+      for (var w = new Date(monday); w <= end && out.length < max; w.setDate(w.getDate() + 7 * every)) {
+        days.forEach(function (n) {
+          var x = new Date(w); x.setDate(w.getDate() + (n - 1));
+          if (x >= start && x <= end && out.length < max) add(x);
+        });
+      }
+    } else if (unit === 'month') {
+      for (k = 0; out.length < max; k += every) {
+        var m = start.getMonth() + k, dim = new Date(start.getFullYear(), m + 1, 0).getDate();
+        d = new Date(start.getFullYear(), m, Math.min(start.getDate(), dim));
+        if (d > end) break;
+        add(d);
+      }
+    } else {
+      for (k = 0; out.length < max; k += every) {
+        d = new Date(start.getFullYear() + k, start.getMonth(), start.getDate());
+        if (d > end) break;
+        add(d);
+      }
+    }
+    return out;
+  }
+  function newSeriesId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+  }
+
   async function eventForm(ev) {
     // Wie in der FBRO-App: Titel, Datum und Uhrzeit getrennt (Datum | Zeit nebeneinander), Ort
     var local = ev ? toLocalInput(ev.starts_at).split('T') : ['', '18:00'];
-    var f = await askForm(ev ? L('evEdit') : L('evNew'), [
+    var fields = [
       { name: 'title', label: L('evTitle'), value: ev && ev.title },
       { name: 'date', label: L('evDate'), type: 'date', value: local[0], half: true },
       { name: 'time', label: L('evTime'), type: 'time', value: local[1], half: true },
       { name: 'place', label: L('evPlace'), value: ev && ev.place },
       { name: 'rsvp', label: L('evRsvp'), type: 'checkbox', value: ev ? ev.rsvp !== false : true }
-    ]);
+    ];
+    // Wiederholung nur beim Anlegen eines neuen Events
+    if (!ev) { fields.push({ name: 'repeat', label: L('evRepeat'), type: 'checkbox', value: false }); fields.push({ name: 'rec', type: 'recurrence' }); }
+    var f = await askForm(ev ? L('evEdit') : L('evNew'), fields);
     if (!f) return;
     if (!f.title || !f.date || !f.time || !f.place) return toast(L('evMissing'));
     var row = { title: f.title, place: f.place, starts_at: new Date(f.date + 'T' + f.time).toISOString(), rsvp: !!f.rsvp };
+    if (!ev && f.repeat) {
+      if (!f.until) return toast(L('evUntilMissing'));
+      var occ = genOccurrences(f.date, f.time, Math.max(1, f.every || 1), f.unit, f.wd, f.until);
+      if (!occ.length) return toast(L('evNoOcc'));
+      var sid = newSeriesId();
+      var rows = occ.map(function (iso) { return { title: row.title, place: row.place, rsvp: row.rsvp, starts_at: iso, series_id: sid }; });
+      return act(async function () { var r = await sb.from(T('events')).insert(rows); if (r.error) throw r.error; }, L('evSeriesAdded', { n: rows.length }));
+    }
     return act(async function () {
-      var r = ev ? await sb.from('events').update(row).eq('id', ev.id) : await sb.from('events').insert(row);
+      var r = ev ? await sb.from(T('events')).update(row).eq('id', ev.id) : await sb.from(T('events')).insert(row);
       if (r.error) throw r.error;
     }, L('saved'));
   }
@@ -657,11 +744,22 @@
       }
       case 'ev-new': return eventForm(null);
       case 'ev-edit': return eventForm(ev);
-      case 'ev-del':
-        if (canManageEvents() && await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))
-          return act(async function () { var r = await sb.from('events').delete().eq('id', id); if (r.error) throw r.error; }, L('removed'));
-        return;
-      case 'admin': return rpc('set_admin', { target: id, make_admin: v === 'true' }, L('saved'));
+      case 'ev-del': {
+        if (!canManageEvents() || !ev) return;
+        var inSeries = ev.series_id && S.events.filter(function (x) { return x.series_id === ev.series_id; }).length > 1;
+        var scope = 'one';
+        if (inSeries) {
+          var sf = await askForm(L('del'), [{ name: 'scope', label: L('evDelScope'), type: 'select', value: 'one', options: [
+            { v: 'one', l: L('evDelOne') }, { v: 'future', l: L('evDelFuture') }, { v: 'all', l: L('evDelAll') }] }], L('del'), L('evDeleteAsk', { name: ev.title }));
+          if (!sf) return;
+          scope = sf.scope;
+        } else if (!(await askConfirm(L('del'), L('evDeleteAsk', { name: ev.title }), true))) return;
+        return act(async function () {
+          var q = sb.from(T('events')).delete();
+          q = scope === 'one' ? q.eq('id', id) : scope === 'future' ? q.eq('series_id', ev.series_id).gte('starts_at', ev.starts_at) : q.eq('series_id', ev.series_id);
+          var r = await q; if (r.error) throw r.error;
+        }, L('removed'));
+      }      case 'admin': return rpc('set_admin', { target: id, make_admin: v === 'true' }, L('saved'));
       case 'reset-pin':
         if (await askConfirm(L('resetPin'), L('resetPinAsk', { name: member.name }))) return rpc('reset_pin', { target: id }, L('pinReset'));
         return;
