@@ -323,16 +323,45 @@
   }
   function fmtDay(iso) { return new Date(iso).toLocaleDateString(LOCALE[lang], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
   function fmtTime(iso) { return new Date(iso).toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit' }); }
+  // Zeithorizont in Monaten (persönlich, nur auf diesem Gerät gespeichert); 0 = alle Events zeigen
+  function evHorizon() {
+    var v = null;
+    try { v = localStorage.getItem('app-ev-horizon' + SFX); } catch (e) { /* ignorieren */ }
+    var n = parseInt(v, 10);
+    return isNaN(n) ? 3 : n;
+  }
+  function monthLabel(iso) { return new Date(iso).toLocaleDateString(LOCALE[lang], { month: 'long', year: 'numeric' }); }
+  // Events mit Monatsüberschrift gruppiert (wie in der FBRO-App)
+  function monthList(events) {
+    var html = '', last = '';
+    events.forEach(function (e) {
+      var label = monthLabel(e.starts_at);
+      if (label !== last) { html += '<h2 class="week">' + esc(label) + '</h2>'; last = label; }
+      html += eventCard(e);
+    });
+    return html;
+  }
   function viewEvents() {
     var limit = Date.now() - 3 * 3600e3;
     var up = S.events.filter(function (e) { return new Date(e.starts_at).getTime() >= limit; });
     var past = S.events.filter(function (e) { return new Date(e.starts_at).getTime() < limit; }).reverse();
-    // Admins und Event Manager legen Events direkt hier mit «+» an
-    return '<div class="top"><div><h1 class="pagetitle">' + esc(L('navEvents')) + '</h1></div>' +
-      (canManageEvents() ? '<button type="button" class="hico addbtn" data-act="ev-new" aria-label="' + esc(L('evNew')) + '" title="' + esc(L('evNew')) + '">' + ICON.plus + '</button>' : '') + '</div>' +
-      '<h2 class="week">' + esc(L('evUpcoming')) + '</h2>' +
-      (up.length ? up.map(eventCard).join('') : '<div class="empty"><p>' + esc(L('evEmpty')) + '</p></div>') +
-      (past.length ? '<h2 class="week">' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('') : '');
+    var hz = evHorizon(), cut = null;
+    if (hz > 0) { var c = new Date(); c.setMonth(c.getMonth() + hz); cut = c.getTime(); }
+    var near = cut === null ? up : up.filter(function (e) { return new Date(e.starts_at).getTime() < cut; });
+    var far = cut === null ? [] : up.filter(function (e) { return new Date(e.starts_at).getTime() >= cut; });
+    // «…» stellt den Zeithorizont ein (alle), «+» legt Events an (Admins und Event Manager)
+    var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navEvents')) + '</h1></div>' +
+      '<button type="button" class="hico addbtn" data-act="ev-horizon" aria-label="' + esc(L('evHorizonTitle')) + '" title="' + esc(L('evHorizonTitle')) + '">' + ICON.dots + '</button>' +
+      (canManageEvents() ? '<button type="button" class="hico addbtn" data-act="ev-new" aria-label="' + esc(L('evNew')) + '" title="' + esc(L('evNew')) + '">' + ICON.plus + '</button>' : '') + '</div>';
+    if (near.length) html += monthList(near);
+    else html += '<div class="empty"><p>' + esc(far.length ? L('evNoneInHorizon', { n: hz }) : L('evEmpty')) + '</p></div>';
+    if (far.length) {
+      var more = !!S.open.evmore;
+      html += '<button type="button" class="morebtn" data-act="ev-more" aria-expanded="' + more + '"><span>' + esc(L('evMore', { n: far.length })) + '</span>' + ICON.chev + '</button>';
+      if (more) html += monthList(far);
+    }
+    if (past.length) html += '<h2 class="week">' + esc(L('evPast')) + '</h2>' + past.map(eventCard).join('');
+    return html;
   }
 
   /* ---------- Tasks: jede Person kann einer anderen eine Aufgabe mit Wunschtermin zuweisen ---------- */
@@ -616,6 +645,15 @@
             : await sb.from('event_responses').upsert({ event_id: id, user_id: S.me.id, answer: v });
           if (r.error) throw r.error;
         });
+      }
+      case 'ev-more': S.open.evmore = !S.open.evmore; return render();
+      case 'ev-horizon': {
+        var hopts = [1, 2, 3, 4, 6, 9, 12].map(function (n) { return { v: String(n), l: n === 1 ? L('evMonthOne') : L('evMonthsN', { n: n }) }; });
+        hopts.push({ v: '0', l: L('evAllMonths') });
+        var hf = await askForm(L('evHorizonTitle'), [{ name: 'months', label: L('evHorizonLbl'), type: 'select', value: String(evHorizon()), options: hopts }]);
+        if (!hf) return;
+        try { localStorage.setItem('app-ev-horizon' + SFX, hf.months); } catch (e2) { /* ignorieren */ }
+        return render();
       }
       case 'ev-new': return eventForm(null);
       case 'ev-edit': return eventForm(ev);
