@@ -337,16 +337,18 @@
       }).join('') : '<span class="small muted">' + esc(L('evNobody')) + '</span>';
     };
     var btn = function (v, cls, label) { return '<button type="button" class="resp ' + cls + '" data-act="answer" data-id="' + e.id + '" data-val="' + v + '" aria-pressed="' + !!(mine && mine.answer === v) + '">' + esc(label) + '</button>'; };
+    var info = !!S.open['evc:' + e.id];   // Zeit und Ort: standardmässig eingeklappt
+    var infoHtml = info ? '<p class="muted small">' + esc(e.time_set === false ? L('evNoTime') : fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' : '';
+    // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
+    var rsvpHtml = e.rsvp === false ? '' :
+      '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
+      '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
+      (open ? '<div class="who"><div><h4>' + esc(L('evParticipants', { n: yes.length })) + '</h4><div class="chips">' + pills(yes) + '</div></div>' +
+        '<div><h4>' + esc(L('evDeclined', { n: no.length })) + '</h4><div class="chips">' + pills(no) + '</div></div></div>' : '');
     return '<article class="ccel"><div class="cceh"><b>' + esc(fmtDay(e.starts_at)) + ' – ' + esc(e.title) + (e.series_id ? ' <span class="small muted" title="' + esc(L('evRepeat')) + '">&#8635;</span>' : '') + '</b>' +
-      (canManageEvents() ? '<button type="button" class="hico" data-act="ev-edit" data-id="' + e.id + '" aria-label="' + esc(L('edit')) + '" title="' + esc(L('edit')) + '">' + ICON.dots + '</button>' : '') + '</div>' +
-      '<div class="ccbody"><p class="muted small">' + esc(e.time_set === false ? L('evNoTime') : fmtTime(e.starts_at)) + (e.place ? ' · ' + esc(e.place) : '') + '</p>' +
-      // Antwort-Knöpfe nur, wenn für das Event eine Teilnahme nötig ist (rsvp)
-      (e.rsvp === false ? '' :
-        '<div class="actrow">' + btn('yes', 'yes', L('evYes')) + btn('no', 'no', L('evNo')) +
-        '<button type="button" class="resp cntbtn' + (open ? ' is-open' : '') + '" data-act="who" data-id="' + e.id + '" aria-expanded="' + open + '"><b>' + yes.length + '</b>' + ICON.chev + '</button></div>' +
-        (open ? '<div class="who"><div><h4>' + esc(L('evParticipants', { n: yes.length })) + '</h4><div class="chips">' + pills(yes) + '</div></div>' +
-          '<div><h4>' + esc(L('evDeclined', { n: no.length })) + '</h4><div class="chips">' + pills(no) + '</div></div></div>' : '')) +
-      '</div></article>';
+      (canManageEvents() ? '<button type="button" class="hico" data-act="ev-edit" data-id="' + e.id + '" aria-label="' + esc(L('edit')) + '" title="' + esc(L('edit')) + '">' + ICON.dots + '</button>' : '') +
+      '<button type="button" class="accfold' + (info ? ' open' : '') + '" data-act="ev-card" data-id="' + e.id + '" aria-expanded="' + info + '" aria-label="' + esc(L('evInfo')) + '" title="' + esc(L('evInfo')) + '">' + ICON.chev + '</button></div>' +
+      (infoHtml || rsvpHtml ? '<div class="ccbody">' + infoHtml + rsvpHtml + '</div>' : '') + '</article>';
   }
   function fmtDay(iso) { return new Date(iso).toLocaleDateString(LOCALE[lang], { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
   function fmtTime(iso) { return new Date(iso).toLocaleTimeString(LOCALE[lang], { hour: '2-digit', minute: '2-digit' }); }
@@ -368,6 +370,36 @@
     });
     return html;
   }
+  // Monatskalender: 7 Tage breit, 4–6 Wochen hoch; Tage mit Event zeigen ein Symbol, Antippen zeigt die Termine darunter
+  function viewCalendar() {
+    var now = new Date();
+    var base = S.calMonth ? new Date(S.calMonth) : new Date(now.getFullYear(), now.getMonth(), 1);
+    var y = base.getFullYear(), m = base.getMonth();
+    var byDay = {};
+    S.events.forEach(function (e) { var k = isoDate(new Date(e.starts_at)); (byDay[k] = byDay[k] || []).push(e); });
+    var lead = (new Date(y, m, 1).getDay() + 6) % 7, dim = new Date(y, m + 1, 0).getDate(), weeks = Math.ceil((lead + dim) / 7);
+    var todayKey = isoDate(now);
+    var sel = S.calDay && S.calDay.slice(0, 7) === isoDate(base).slice(0, 7) ? S.calDay : '';
+    var lastOk = new Date(now.getFullYear(), now.getMonth() + 12, 1);
+    var html = '<div class="calnav"><button type="button" class="hico" data-act="cal-prev" aria-label="' + esc(L('evPrevMonth')) + '">' + ICON.chev + '</button>' +
+      '<b>' + esc(base.toLocaleDateString(LOCALE[lang], { month: 'long', year: 'numeric' })) + '</b>' +
+      '<button type="button" class="hico" data-act="cal-next" aria-label="' + esc(L('evNextMonth')) + '"' + (new Date(y, m + 1, 1) > lastOk ? ' disabled' : '') + '>' + ICON.chev + '</button></div>';
+    html += '<div class="calgrid calwd">' + [1, 2, 3, 4, 5, 6, 7].map(function (d) { return '<span>' + esc(new Date(2024, 0, d).toLocaleDateString(LOCALE[lang], { weekday: 'short' })) + '</span>'; }).join('') + '</div>';
+    var cells = '';
+    for (var c = 0; c < weeks * 7; c++) {
+      var dn = c - lead + 1;
+      if (dn < 1 || dn > dim) { cells += '<span class="calday out"></span>'; continue; }
+      var key = isoDate(new Date(y, m, dn)), evs = byDay[key] || [];
+      var cls = 'calday' + (evs.length ? ' has' : '') + (key === todayKey ? ' today' : '') + (key === sel ? ' sel' : '');
+      cells += evs.length
+        ? '<button type="button" class="' + cls + '" data-act="cal-day" data-val="' + key + '" aria-pressed="' + (key === sel) + '"><span class="dn">' + dn + '</span>' + ICON.cal + (evs.length > 1 ? '<span class="cn">' + evs.length + '</span>' : '') + '</button>'
+        : '<span class="' + cls + '"><span class="dn">' + dn + '</span></span>';
+    }
+    html += '<div class="calgrid">' + cells + '</div>';
+    if (sel && byDay[sel]) html += '<div class="calsel">' + byDay[sel].map(eventCard).join('') + '</div>';
+    else html += '<p class="muted small calhint">' + esc(L('evCalHint')) + '</p>';
+    return html;
+  }
   function viewEvents() {
     var limit = Date.now() - 3 * 3600e3;
     var yc = new Date(); yc.setFullYear(yc.getFullYear() + 1); var yearCut = yc.getTime();   // Agenda zeigt höchstens ein Jahr voraus
@@ -382,6 +414,11 @@
     var html = '<div class="top"><div><h1 class="pagetitle">' + esc(L('navEvents')) + '</h1></div>' +
       '<button type="button" class="hico addbtn" data-act="ev-horizon" aria-label="' + esc(L('evHorizonTitle')) + '" title="' + esc(L('evHorizonTitle')) + '">' + ICON.dots + '</button>' +
       (canManageEvents() ? '<button type="button" class="hico addbtn" data-act="ev-new" aria-label="' + esc(L('evNew')) + '" title="' + esc(L('evNew')) + '">' + ICON.plus + '</button>' : '') + '</div>';
+    // zwei Register: Liste | Kalender
+    var evv = S.evView === 'cal' ? 'cal' : 'list';
+    var etab = function (v, label) { var on = v === evv; return '<button type="button" role="tab" class="subtab' + (on ? ' on' : '') + '" aria-selected="' + on + '" data-act="ev-view" data-val="' + v + '">' + esc(label) + '</button>'; };
+    html += '<div class="subtabs" role="tablist">' + etab('list', L('evTabList')) + etab('cal', L('evTabCal')) + '</div>';
+    if (evv === 'cal') return html + viewCalendar();
     if (near.length) html += monthList(near);
     else html += '<div class="empty"><p>' + esc(far.length ? L('evNoneInHorizon', { n: hz }) : L('evEmpty')) + '</p></div>';
     if (far.length) {
@@ -748,6 +785,15 @@
     switch (a) {
       case 'goto': S.tab = v; render(); return window.scrollTo(0, 0);
       case 'sec': S.sec[id] = !(S.sec[id] !== false); return render();
+      case 'ev-view': S.evView = v; return render();
+      case 'ev-card': S.open['evc:' + id] = !S.open['evc:' + id]; return render();
+      case 'cal-day': S.calDay = v; return render();
+      case 'cal-prev': case 'cal-next': {
+        var cb = S.calMonth ? new Date(S.calMonth) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        S.calMonth = new Date(cb.getFullYear(), cb.getMonth() + (a === 'cal-next' ? 1 : -1), 1).getTime();
+        S.calDay = '';
+        return render();
+      }
       case 'task-view': S.taskView = v; return render();
       case 'who': S.open['ev:' + id] = !S.open['ev:' + id]; return render();
       case 'task-new': return taskForm(null);

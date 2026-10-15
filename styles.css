@@ -205,3 +205,28 @@ p{margin:0}
 :root[data-design="petrol"] body::before{content:"";display:block;height:6px;background:linear-gradient(90deg,#0E5F6F,#2BAFC4)}
 :root[data-design="petrol"] .cceh,:root[data-design="petrol"] .acch{background:var(--crown-soft);border-left:4px solid var(--crown)}
 .recrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.recrow[hidden]{display:none}.recrow .fld{margin:0}.recrow select{width:100%;min-width:0}
+
+/* Agenda: Monatskalender */
+.calnav{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px}
+.calnav b{font-size:1.05rem;text-transform:capitalize}
+.calnav .hico:first-child svg{transform:rotate(90deg)}
+.calnav .hico:last-child svg{transform:rotate(-90deg)}
+.calnav .hico[disabled]{opacity:.3}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.calwd{margin-bottom:4px}
+.calwd span{text-align:center;font-size:.78rem;color:var(--muted);text-transform:uppercase}
+.calday{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px;border:1px solid var(--line);border-radius:var(--r-btn,10px);background:var(--surface);color:var(--ink);font:inherit;padding:2px}
+.calday.out{border-color:transparent;background:none}
+.calday .dn{font-size:.9rem}
+.calday svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--crown)}
+.calday.has{background:var(--crown-soft);cursor:pointer}
+.calday.today{border-color:var(--crown);border-width:2px}
+.calday.sel{background:var(--crown);color:var(--btn-fg,#fff)}
+.calday.sel svg{color:inherit}
+.calday .cn{position:absolute;top:2px;right:4px;font-size:.68rem;color:var(--muted)}
+.calday.sel .cn{color:inherit}
+.calsel{margin-top:14px}
+.calhint{margin-top:12px;text-align:center}
+.cceh .accfold{margin-left:auto}
+.cceh b + .hico,.cceh b + .accfold{margin-left:auto}
+.cceh .hico + .accfold{margin-left:0}
