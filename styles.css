@@ -190,12 +190,6 @@ p{margin:0}
 .top{align-items:flex-end}
 /* Wiederholung (Event-Formular), Wochentage zum Antippen */
 .recblock[hidden],.fld[hidden]{display:none}
-.wdrow{display:flex;gap:6px}
-.wd{flex:1;position:relative;min-width:0}
-.wd input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.wd span{display:block;text-align:center;padding:10px 0;border:1.5px solid var(--line);border-radius:var(--r-btn);font-weight:600;font-size:.9rem;background:var(--surface)}
-.wd input:checked + span{background:var(--crown);border-color:var(--crown);color:#fff}
-.wd input:focus-visible + span{outline:3px solid var(--focus);outline-offset:2px}
 
 /* Petrol: tiefes Blaugrün, kühle Flächen, ruhig und kräftig zugleich */
 :root[data-design="petrol"]{--bg:#EEF5F6;--surface:#fff;--ink:#0A2A32;--muted:#4C6F78;--line:#CBDFE3;--crown:#0E5F6F;--crown-soft:#D9ECEF;--btn-bg:#0E6B7C;--btn-fg:#fff;--yes:#2E7D32;--yes-soft:#E1F2E2;--no:#B3261E;--no-soft:#FBE4E1;--focus:#0E8FA6;
@@ -248,3 +242,7 @@ textarea[name]{width:100%;font-family:inherit;font-size:1rem;padding:10px 12px;b
 .profrow span{flex:0 0 96px}
 .profrow b{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:600}
 .profrow svg{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* Heute im Kalender: markant */
+.calday.today{border:3px solid var(--crown);background:color-mix(in srgb,var(--crown) 16%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,var(--crown) 30%,transparent)}
+.calday.today .dn{font-weight:800;color:var(--crown)}
+.calday.today.sel .dn{color:inherit}

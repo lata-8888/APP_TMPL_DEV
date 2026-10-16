@@ -3,16 +3,13 @@
 Fundament für zukünftige Apps (Vorlage). Die Familien-App `lata-family` ist eine Kopie davon mit zusätzlichen Bereichen.
 
 ## Was die App kann
-- **Login** mit Handynummer + PIN (Standard-PIN = letzte 6 Ziffern der Nummer). Keine Selbstregistrierung. Nummernfeld mit Länderauswahl **CH +41 / DE +49 / Andere**, Live-Formatierung, `+49…`/`0041…` wählt das Land automatisch (wie FBRO-App). Gespeichert wird `+41791234567`.
-- **Events:** kommend/vergangen; Datum und Zeit getrennt; pro Event «Teilnahme nötig» (`rsvp`); Antworten «Dabei / Nicht dabei» mit Teilnehmerliste. Anlegen/Bearbeiten mit **+** und **…** auf der Seite (Admin und Event Manager), Löschen im Admin.
-- **Tasks:** jede Person kann jeder Person (auch sich selbst) eine Aufgabe mit Wunschtermin zuweisen. Abschnitte «Für mich», «Von mir», für Admins «Weitere». Abhaken mit Kästchen. Sichtbar nur für Ersteller, Zugewiesene und Admins; Zugewiesene dürfen nur «erledigt» setzen.
-- **Admin:** Events; Personen (Gruppen User/Gäste, Rollen, PIN zurücksetzen); **Design**; **Standardsprache**.
-- **Profil:** Name, Sprache, Hell/Dunkel/Automatisch, PIN ändern, App installieren, Abmelden. Banner, solange der Standard-PIN aktiv ist.
-- **Rollen:** `User`, `Gast` (`is_guest`), `Admin` (`is_admin`), `Event Manager` (`is_event_manager`; darf Events verwalten, sieht im Admin nur Events). Gäste sind weder Admin noch Event Manager.
-- **Designs** (Admin wählt, gilt für alle; `app_settings`): `standard`, `holland` (Anzeigename «Orange»), `light` (Anzeigename «Simple»).
-- **Sprachen:** `de`, `en`, `nl`. Standardsprache vom Admin; jede Person kann im Profil überschreiben.
-- **Default-Admin:** *System Administrator*, `+41 79 623 23 45`, Standard-PIN `232345`. Wird von `supabase/schema.sql` bei jedem Lauf angelegt/als Admin sichergestellt, per Trigger geschützt. **PIN beim ersten Login ändern!**
-
+- **Login** mit Handynummer + PIN (Standard-PIN = letzte 6 Ziffern der Nummer). Keine Selbstregistrierung. Länderauswahl CH/DE/Andere, Live-Formatierung.
+- **Agenda** (Tabs Event Liste | Kalender): Events mit optionaler Zeit/Ort/Kommentar, Teilnahme nötig (`rsvp`, Standard aus), Zuteilung an Personen, Wiederholung (unbegrenzt, bis 1 Jahr voraus), Antworten «Dabei / Nicht dabei».
+- **Tasks:** Tabs «Für mich | Von mir | Weitere (Admin)»; jede Person kann jeder Person eine Aufgabe zuweisen.
+- **Admin:** (alle Bereiche beim Öffnen zu) Agenda, Personen, Tasks (alle), Standard Design, Standard Sprache.
+- **Profil:** Name und Handynummer antippen, Sprache, Hell/Dunkel/Automatisch, Design pro Person (White, Blue, Petrol, Orange), PIN, Installieren.
+- **Rollen:** `User`, `Gast`, `Admin`, `Event Manager`. **Sprachen:** de, en, nl.
+- **Default-Admin:** *System Administrator*, `+41 79 623 23 45`, Standard-PIN `232345`. PIN beim ersten Login ändern!
 ## Mehrere Apps in einem Supabase-Projekt
 Die Vorlage nutzt Tabellen ohne Präfix (`profiles`, `events`, `tasks` …). Eine Kopie im selben Projekt (z. B. `lata-family`) setzt in `config.js` `TABLE_PREFIX` / `FUNCTION_PREFIX` / `STORAGE_SUFFIX` und hat eigene Tabellen und Funktionen mit diesem Präfix; die Logins (`auth.users`) sind gemeinsam. Im Code immer `T('tabelle')` und `F('funktion')` verwenden. Die Tabellen anderer Apps nie anfassen.
 

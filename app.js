@@ -252,6 +252,7 @@
   /* ---------- Daten laden & Live-Aktualisierung ---------- */
   async function loadAll() {
     var uid = S.session.user.id;
+    var pEA = Promise.resolve(sb.from(T('event_assignees')).select('*'));   // parallel zu den übrigen Abfragen
     var r = await Promise.all([
       sb.from('profiles').select('*').order('name'),
       sb.from('events').select('*').order('starts_at'),
@@ -261,7 +262,7 @@
       sb.from('tasks').select('*').order('due_date')
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
-    var ra = await sb.from(T('event_assignees')).select('*'); if (ra.error) throw ra.error;
+    var ra = await pEA; if (ra.error) throw ra.error;
     S.assign = ra.data || [];
     S.members = r[0].data; S.events = r[1].data; S.resp = r[2].data; S.tasks = r[5].data;
     adminDesign = DESIGNS.some(function (x) { return x.id === r[3].data; }) ? r[3].data : 'standard';
@@ -631,12 +632,6 @@
       return f.elements[n] ? f.elements[n].value.trim() : '';
     }, kind = f.dataset.form;
     if (kind === 'login') return handleLogin(g);
-    if (kind === 'profile') {
-      return act(async function () {
-        var r = await sb.from('profiles').update({ name: g('name'), language: g('language') }).eq('id', S.me.id); if (r.error) throw r.error;
-        setLang(g('language'));
-      }, L('saved'));
-    }
     if (kind === 'pin') {
       if (!/^\d{6}$/.test(g('pin'))) return toast(L('pinExact'));
       if (pinWeak(g('pin'), S.me.phone)) return toast(L('pinWeak'));
@@ -649,7 +644,7 @@
 
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); installEvt = e; if (S.step === 'app') render(); });
 
-  // Wiederholung wie in Outlook: «Wiederholen alle [n] [Tag|Woche|Monat|Jahr]», Wochentage, «Bis»
+  // Datum-Helfer und automatische Verlängerung unbegrenzter Serien
   function isoDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function oneYear() { var d = new Date(); d.setFullYear(d.getFullYear() + 1); return isoDate(d); }
   // unbegrenzte Serien laufend bis ein Jahr voraus ergänzen (nur Admin/Event Manager, beim Öffnen)
