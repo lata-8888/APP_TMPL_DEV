@@ -246,3 +246,5 @@ textarea[name]{width:100%;font-family:inherit;font-size:1rem;padding:10px 12px;b
 .calday.today{border:3px solid var(--crown);background:color-mix(in srgb,var(--crown) 16%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,var(--crown) 30%,transparent)}
 .calday.today .dn{font-weight:800;color:var(--crown)}
 .calday.today.sel .dn{color:inherit}
+/* Event-Titel: normale Schrift statt fett (besser lesbar) */
+:root[data-design] .cceh b{font-family:var(--font);font-weight:400;font-size:1.15rem}
